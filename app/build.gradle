@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "ru.netology.nmedia" // Рекомендуется использовать знак "=" для присваивания
+    namespace = "ru.netology.nmedia"
     compileSdk = 35
 
     defaultConfig {

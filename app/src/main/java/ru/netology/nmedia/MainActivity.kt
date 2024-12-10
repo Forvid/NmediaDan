@@ -1,4 +1,4 @@
-package com.example.danappnmedia
+package ru.netology.nmedia
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
