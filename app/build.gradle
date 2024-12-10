@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.danappnmedia'
+    namespace 'ru.netology.nmedia'
     compileSdk 35
 
     defaultConfig {
-        applicationId "com.example.danappnmedia"
+        applicationId "ru.netology.nmedia"
         minSdk 24
         targetSdk 34
         versionCode 1
