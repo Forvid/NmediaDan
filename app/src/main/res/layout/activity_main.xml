@@ -9,6 +9,7 @@
     tools:context=".MainActivity">
 
 
+
     <ImageView
         android:id="@+id/avatar"
         android:layout_width="@dimen/posts_avatar_size"
@@ -19,6 +20,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/content"
         tools:srcCompat="@sample/posts.json/data/authorAvatar" />
+
 
     <TextView
         android:id="@+id/author"
@@ -33,6 +35,7 @@
         app:layout_constraintEnd_toStartOf="@+id/options"
         tools:text="@sample/posts.json/data/author" />
 
+
     <TextView
         android:id="@+id/published"
         android:layout_width="0dp"
@@ -42,6 +45,7 @@
         app:layout_constraintStart_toStartOf="@+id/author"
         app:layout_constraintEnd_toEndOf="@+id/author"
         tools:text="@sample/posts.json/data/published" />
+
 
     <ImageButton
         android:id="@+id/options"
