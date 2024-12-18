@@ -1,15 +1,12 @@
 package ru.netology.nmedia.activity
 
-
 import android.os.Bundle
-
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import ru.netology.nmedia.R
 import ru.netology.nmedia.databinding.ActivityMainBinding
-import ru.netology.nmedia.viewmodel.PostViewModel
 import ru.netology.nmedia.dto.formatCount
-
+import ru.netology.nmedia.viewmodel.PostViewModel
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,9 +15,7 @@ class MainActivity : AppCompatActivity() {
         val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Подключение ViewModel
         val viewModel: PostViewModel by viewModels()
-
 
         viewModel.data.observe(this) { post ->
             with(binding) {
@@ -36,7 +31,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Обработчики кликов
         binding.like.setOnClickListener {
             viewModel.like()
         }
