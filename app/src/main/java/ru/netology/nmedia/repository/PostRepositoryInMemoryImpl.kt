@@ -5,32 +5,50 @@ import androidx.lifecycle.MutableLiveData
 import ru.netology.nmedia.dto.Post
 
 class PostRepositoryInMemoryImpl : PostRepository {
-    private val _data = MutableLiveData(
+    private val posts = mutableListOf(
         Post(
             id = 1,
             author = "Нетология. Университет интернет-профессий будущего",
             published = "21 мая в 18:36",
-            content = "Привет, это новая Нетология! Когда-то Нетология начиналась с интенсивов по онлайн-маркетингу. Затем появились курсы по дизайну, разработке, аналитике и управлению. Мы растём сами и помогаем расти студентам: от новичков до уверенных профессионалов. Но самое важное остаётся с нами: мы верим, что в каждом уже есть сила, которая заставляет хотеть больше, целиться выше, бежать быстрее. Наша миссия — помочь встать на путь роста и начать цепочку перемен → http://netolo.gy/fyb",
+            content = "Привет, это новая Нетология! Когда-то Нетология начиналась с интенсивов по онлайн-маркетингу...",
+            likedByMe = false,
             likes = 999,
             shares = 50,
-            views = 100_000,
-            likedByMe = false
+            views = 100_000
         )
     )
-    override val data: LiveData<Post> = _data // Реализация абстрактного свойства
 
-    override fun like() {
-        val currentPost = _data.value ?: return
-        _data.value = currentPost.copy(
-            likedByMe = !currentPost.likedByMe,
-            likes = if (currentPost.likedByMe) currentPost.likes - 1 else currentPost.likes + 1
-        )
+    private val _data = MutableLiveData<List<Post>>(posts)
+    override val data: LiveData<List<Post>> = _data  // корректное переопределение
+
+    override fun getAll(): LiveData<List<Post>> = data
+
+    override fun likeById(id: Long) {
+        val updatedPosts = posts.map {
+            if (it.id == id) {
+                it.copy(
+                    likedByMe = !it.likedByMe,
+                    likes = if (it.likedByMe) it.likes - 1 else it.likes + 1
+                )
+            } else {
+                it
+            }
+        }
+        posts.clear()
+        posts.addAll(updatedPosts)
+        _data.value = updatedPosts
     }
 
-    override fun share() {
-        val currentPost = _data.value ?: return
-        _data.value = currentPost.copy(
-            shares = currentPost.shares + 1
-        )
+    override fun shareById(id: Long) {
+        val updatedPosts = posts.map {
+            if (it.id == id) {
+                it.copy(shares = it.shares + 1)
+            } else {
+                it
+            }
+        }
+        posts.clear()
+        posts.addAll(updatedPosts)
+        _data.value = updatedPosts
     }
 }

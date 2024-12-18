@@ -4,7 +4,8 @@ import androidx.lifecycle.LiveData
 import ru.netology.nmedia.dto.Post
 
 interface PostRepository {
-    val data: LiveData<Post> // Определяем абстрактное свойство для получения данных
-    fun like()
-    fun share()
+    val data: LiveData<List<Post>>
+    fun getAll(): LiveData<List<Post>>
+    fun likeById(id: Long)
+    fun shareById(id: Long)
 }
