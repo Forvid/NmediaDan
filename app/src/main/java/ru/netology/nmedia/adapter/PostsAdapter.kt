@@ -8,6 +8,9 @@ import androidx.recyclerview.widget.RecyclerView
 import ru.netology.nmedia.R
 import ru.netology.nmedia.databinding.CardPostBinding
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.dto.formatCount
+
+
 
 class PostsAdapter(
     private val onLikeClicked: (Post) -> Unit,
@@ -33,9 +36,18 @@ class PostsAdapter(
             binding.author.text = post.author
             binding.published.text = post.published
             binding.content.text = post.content
+
+            // Установка текста для счётчиков
+            binding.likeCount.text = formatCount(post.likes) // Лайки
+            binding.shareCount.text = formatCount(post.shares) // Шеры
+            binding.viewsCount.text = formatCount(post.views) // Просмотры
+
+            // Установка иконки лайка
             binding.like.setImageResource(
                 if (post.likedByMe) R.drawable.ic_liked_24 else R.drawable.ic_like_24
             )
+
+            // Обработчики нажатий
             binding.like.setOnClickListener { onLikeClicked(post) }
             binding.share.setOnClickListener { onShareClicked(post) }
         }
