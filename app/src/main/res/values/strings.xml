@@ -1,9 +1,17 @@
 <resources>
     <string name="app_name">NMedia</string>
-    <string name="main_text">NMedia!</string>
-    <string name="description_post_author_avatar">Аватар автора поста</string>
-    <string name="description_post_menu">Меню поста</string>
-    <string name="description_post_like">Нравится</string>
-    <string name="description_post_share">Поделиться</string>
-    <string name="description_post_views">Просмотры</string>
+    <string name="hello">Hello World!</string>
+    <string name="description_post_author_avatar">Post author avatar</string>
+    <string name="description_post_menu">Post menu</string>
+    <string name="description_post_like">Like</string>
+    <string name="description_post_share">Share</string>
+    <string name="description_post_save">Save</string>
+    <string name="menu_remove">Remove</string>
+    <string name="post_text">Post Text</string>
+    <string name="menu_edit">Edit</string>
+    <string name="error_empty_content">Content can\'t be empty</string>
+    <string name="description_post_cancel">Отменить редактирование</string>
+    <string name="post_shared">Post shared</string>
+    <string name="description_post_views">Количество просмотров</string>
+    <string name="main_text">Главный текст</string>
 </resources>
