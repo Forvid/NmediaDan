@@ -10,8 +10,8 @@
     <string name="post_text">Post Text</string>
     <string name="menu_edit">Edit</string>
     <string name="error_empty_content">Content can\'t be empty</string>
-    <string name="description_post_cancel">Отменить редактирование</string>
+    <string name="description_post_cancel">Cancel editing</string>
     <string name="post_shared">Post shared</string>
-    <string name="description_post_views">Количество просмотров</string>
-    <string name="main_text">Главный текст</string>
+    <string name="description_post_views">Number of views</string>
+    <string name="main_text">Main text</string>
 </resources>
