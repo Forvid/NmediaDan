@@ -78,7 +78,7 @@
         app:barrierDirection="bottom"
         app:constraint_referenced_ids="content" />
 
-    <!-- Кнопки действий -->
+
     <com.google.android.material.checkbox.MaterialCheckBox
         android:id="@+id/like"
         style="@style/Widget.AppTheme.CheckBoxButton"
@@ -93,7 +93,7 @@
         tools:checked="@sample/posts.json/data/likedByMe"
         tools:text="@sample/posts.json/data/likes" />
 
-    <!-- Кнопка Поделиться -->
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/share"
         style="@style/Widget.AppTheme.IconButton"
@@ -108,7 +108,7 @@
         tools:text="@sample/posts.json/data/shares"/>
 
 
-    <!-- Кнопка Просмотров -->
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/views"
         style="@style/Widget.AppTheme.IconButton"
