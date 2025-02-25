@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:padding="@dimen/common_spacing">
 
-    <!-- Аватар -->
+
     <ImageView
         android:id="@+id/avatar"
         android:layout_width="@dimen/posts_avatar_size"
@@ -17,7 +17,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Автор поста -->
+
     <TextView
         android:id="@+id/author"
         android:layout_width="0dp"
