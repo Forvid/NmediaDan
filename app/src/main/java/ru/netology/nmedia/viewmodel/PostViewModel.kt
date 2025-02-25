@@ -1,5 +1,6 @@
 package ru.netology.nmedia.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -23,7 +24,7 @@ class PostViewModel : ViewModel() {
     val data: LiveData<List<Post>> = repository.getAll()
 
     // MutableLiveData для редактируемого поста
-    private val _edited = MutableLiveData<Post>(Post(id = 0, content = "", author = "Unknown", likedByMe = false, published = ""))
+    private val _edited = MutableLiveData(empty)
     val edited: LiveData<Post> get() = _edited
 
     // Сохранение поста
@@ -35,7 +36,7 @@ class PostViewModel : ViewModel() {
                 repository.update(it)
             }
         }
-        _edited.value = Post(id = 0, content = "", author = "Unknown", likedByMe = false, published = "") // Сброс редактируемого поста
+        _edited.value = empty // Сброс редактируемого поста
     }
 
     // Редактирование поста
@@ -46,16 +47,18 @@ class PostViewModel : ViewModel() {
     // Изменение содержимого поста
     fun changeContent(content: String) {
         val trimmedContent = content.trim()
+        if (_edited.value?.content == trimmedContent) return
         _edited.value = _edited.value?.copy(content = trimmedContent)
     }
 
     // Лайк поста
     fun likeById(postId: Long) {
+        Log.d("PostViewModel", "Liking post: $postId")
         repository.likeById(postId)
     }
 
     // Шеринг поста
-    fun share(postId: Long) {
+    fun shareById(postId: Long) {
         repository.shareById(postId)
     }
 
@@ -66,7 +69,12 @@ class PostViewModel : ViewModel() {
 
     // Отмена редактирования
     fun cancelEdit() {
-        _edited.value = Post(id = 0, content = "", author = "Unknown", likedByMe = false, published = "") // Возврат к пустому состоянию
+        _edited.value = empty
+    }
+
+    // Новый метод like (если нужен)
+    fun like(post: Post) {
+        Log.d("PostViewModel", "Liking post: ${post.id}")
+        repository.likeById(post.id)
     }
 }
-
