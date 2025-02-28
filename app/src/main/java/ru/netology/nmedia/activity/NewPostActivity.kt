@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
 import ru.netology.nmedia.databinding.ActivityNewPostBinding
 
 class NewPostActivity : AppCompatActivity() {
@@ -15,10 +16,10 @@ class NewPostActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false) // Исправленный вызов edge-to-edge
         val binding = ActivityNewPostBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Проверяем, передали ли нам контент для редактирования
         val initialContent = intent.getStringExtra(EXTRA_INITIAL_CONTENT)
         if (!initialContent.isNullOrBlank()) {
             binding.edit.setText(initialContent)
@@ -28,11 +29,9 @@ class NewPostActivity : AppCompatActivity() {
 
         binding.ok.setOnClickListener {
             val content = binding.edit.text?.toString()
-            // Если пусто — отменяем
             if (content.isNullOrBlank()) {
                 setResult(Activity.RESULT_CANCELED)
             } else {
-                // Передаём контент обратно
                 val result = Intent().apply {
                     putExtra(RESULT_KEY, content)
                 }

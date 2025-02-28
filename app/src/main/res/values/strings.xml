@@ -18,5 +18,6 @@
     <string name="play_video">Play video</string>
     <string name="chooser_share_post">Share post</string>
     <string name="add_post">Add post</string>
+    <string name="hint_post_content">Enter post text...</string>
 
 </resources>

@@ -50,21 +50,15 @@ class PostViewHolder(
             published.text = post.published
             content.text = post.content
 
-            // Счётчики
             like.text = formatCount(post.likes)
             share.text = formatCount(post.shares)
             views.text = formatCount(post.views)
 
-            // Лайк
             like.isChecked = post.likedByMe
             like.setOnClickListener { onInteractionListener.onLike(post) }
-
-            // Share
             share.setOnClickListener { onInteractionListener.onShare(post) }
 
-            // Options (menu)
             options.setOnClickListener { view ->
-                Log.d("PostAdapter", "Options button clicked for post ${post.id}")
                 PopupMenu(view.context, view).apply {
                     inflate(R.menu.options_post)
                     setOnMenuItemClickListener { item ->
@@ -83,20 +77,12 @@ class PostViewHolder(
                 }.show()
             }
 
-            // Видео-блок
             if (post.video.isNullOrBlank()) {
                 videoLayout.visibility = View.GONE
             } else {
                 videoLayout.visibility = View.VISIBLE
-
-                // При клике на всю область
-                videoLayout.setOnClickListener {
-                    openVideo(post.video)
-                }
-                // Или отдельно на кнопку
-                playButton.setOnClickListener {
-                    openVideo(post.video)
-                }
+                videoLayout.setOnClickListener { openVideo(post.video) }
+                playButton.setOnClickListener { openVideo(post.video) }
             }
         }
     }

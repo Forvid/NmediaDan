@@ -36,7 +36,7 @@ class PostViewModel : ViewModel() {
                 repository.update(it)
             }
         }
-        _edited.value = empty // Сброс редактируемого поста
+        _edited.postValue(empty) // Сброс редактируемого поста
     }
 
     // Редактирование поста
@@ -48,7 +48,7 @@ class PostViewModel : ViewModel() {
     fun changeContent(content: String) {
         val trimmedContent = content.trim()
         if (_edited.value?.content == trimmedContent) return
-        _edited.value = _edited.value?.copy(content = trimmedContent)
+        _edited.postValue(_edited.value?.copy(content = trimmedContent))
     }
 
     // Лайк поста
@@ -68,8 +68,8 @@ class PostViewModel : ViewModel() {
     }
 
     // Отмена редактирования
-    fun cancelEdit() {
-        _edited.value = empty
+    fun clearEdit() {
+        _edited.postValue(empty)
     }
 
     // Новый метод like (если нужен)
