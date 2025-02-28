@@ -1,7 +1,10 @@
 package ru.netology.nmedia.adapter
 
+import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.recyclerview.widget.DiffUtil
@@ -10,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import ru.netology.nmedia.R
 import ru.netology.nmedia.databinding.CardPostBinding
 import ru.netology.nmedia.dto.Post
-import ru.netology.nmedia.util.formatCount  //  для formatCount
+import ru.netology.nmedia.util.formatCount
 
 interface OnInteractionListener {
     fun onLike(post: Post)
@@ -22,6 +25,7 @@ interface OnInteractionListener {
 class PostAdapter(
     private val onInteractionListener: OnInteractionListener,
 ) : ListAdapter<Post, PostViewHolder>(PostDiffCallback()) {
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PostViewHolder {
         val binding = CardPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return PostViewHolder(binding, onInteractionListener)
@@ -46,18 +50,19 @@ class PostViewHolder(
             published.text = post.published
             content.text = post.content
 
-            // Устанавливаем значения счетчиков
+            // Счётчики
             like.text = formatCount(post.likes)
             share.text = formatCount(post.shares)
             views.text = formatCount(post.views)
 
-            // Устанавливаем состояние кнопки лайка
+            // Лайк
             like.isChecked = post.likedByMe
-
-            // Обработчики нажатий
             like.setOnClickListener { onInteractionListener.onLike(post) }
+
+            // Share
             share.setOnClickListener { onInteractionListener.onShare(post) }
 
+            // Options (menu)
             options.setOnClickListener { view ->
                 Log.d("PostAdapter", "Options button clicked for post ${post.id}")
                 PopupMenu(view.context, view).apply {
@@ -77,17 +82,35 @@ class PostViewHolder(
                     }
                 }.show()
             }
+
+            // Видео-блок
+            if (post.video.isNullOrBlank()) {
+                videoLayout.visibility = View.GONE
+            } else {
+                videoLayout.visibility = View.VISIBLE
+
+                // При клике на всю область
+                videoLayout.setOnClickListener {
+                    openVideo(post.video)
+                }
+                // Или отдельно на кнопку
+                playButton.setOnClickListener {
+                    openVideo(post.video)
+                }
+            }
         }
+    }
+
+    private fun openVideo(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        itemView.context.startActivity(intent)
     }
 }
 
-// Улучшенный PostDiffCallback
 class PostDiffCallback : DiffUtil.ItemCallback<Post>() {
-    override fun areItemsTheSame(oldItem: Post, newItem: Post): Boolean {
-        return oldItem.id == newItem.id
-    }
+    override fun areItemsTheSame(oldItem: Post, newItem: Post): Boolean =
+        oldItem.id == newItem.id
 
-    override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean {
-        return oldItem == newItem
-    }
+    override fun areContentsTheSame(oldItem: Post, newItem: Post): Boolean =
+        oldItem == newItem
 }

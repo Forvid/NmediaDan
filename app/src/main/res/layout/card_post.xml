@@ -80,6 +80,7 @@
         android:contentDescription="@string/description_post_like"
         app:icon="@drawable/ic_like_24dp"
         android:textColor="@android:color/black"
+        android:checkable="true"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/footer"
         tools:text="@sample/posts.json/data/likes" />
@@ -108,5 +109,37 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/footer"
         tools:text="@sample/posts.json/data/views" />
+
+    <LinearLayout
+        android:id="@+id/videoLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:padding="@dimen/common_spacing">
+
+        <ImageView
+            android:id="@+id/videoCover"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_video_cover"
+            android:contentDescription="@string/video_cover"/>
+
+        <ImageButton
+            android:id="@+id/playButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_play_circle"
+            android:contentDescription="@string/play_video"/>
+    </LinearLayout>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

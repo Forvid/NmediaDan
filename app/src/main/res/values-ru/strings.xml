@@ -14,4 +14,9 @@
     <string name="post_shared">Пост опубликован</string>
     <string name="description_post_views">Количество просмотров</string>
     <string name="main_text">Основной текст</string>
+    <string name="video_cover">Видео обложка</string>
+    <string name="play_video">Воспроизвести видео</string>
+    <string name="chooser_share_post">Поделиться</string>
+    <string name="add_post">Добавить пост</string>
+
 </resources>
