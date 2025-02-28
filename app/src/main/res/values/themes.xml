@@ -19,4 +19,5 @@
         <!-- Статус-бар -->
         <item name="android:statusBarColor" >?attr/colorPrimaryVariant</item>
     </style>
+    <color name="icon_gray">#808080</color>
 </resources>

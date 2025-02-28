@@ -1,48 +1,20 @@
 <resources>
 
-    <style name="Widget.AppTheme.CheckBoxButton" parent="Widget.AppCompat.CompoundButton.CheckBox">
-        <item name="android:button">@null</item>
-        <item name="android:background">?attr/selectableItemBackground</item>
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:drawablePadding">8dp</item>
-        <item name="android:padding">8dp</item>
-    </style>
-
     <style name="Widget.AppTheme.LikeButton" parent="Widget.MaterialComponents.Button.TextButton.Icon">
         <item name="iconTint">@color/like_checkbox_tint</item>
         <item name="android:minWidth">@dimen/icon_button_min_size</item>
         <item name="android:minHeight">@dimen/icon_button_min_size</item>
-    </style>
-
-    <style name="Widget.AppTheme.LikeCheckBox" parent="Widget.MaterialComponents.CompoundButton.CheckBox">
-        <item name="buttonTint">@color/like_checkbox_tint</item>
-        <item name="android:paddingStart">@dimen/icon_button_padding</item>
+        <item name="android:textColor">@android:color/black</item>
     </style>
 
     <style name="Widget.AppTheme.IconButton" parent="Widget.MaterialComponents.Button.TextButton.Icon">
         <item name="android:backgroundTint">?attr/colorSurface</item>
-        <item name="android:tint">@color/grey</item>
+        <item name="android:tint">@color/icon_gray</item>
         <item name="android:textColor">@color/black</item>
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
         <item name="android:drawablePadding">8dp</item>
         <item name="android:padding">8dp</item>
         <item name="android:minWidth">@dimen/icon_button_min_size</item>
         <item name="android:minHeight">@dimen/icon_button_min_size</item>
     </style>
-
-
-
-
-
-    <style name="Widget.AppTheme.IconToggleButton" parent="Widget.MaterialComponents.Button.TextButton.Icon">
-        <item name="android:backgroundTint">?attr/colorSurface</item>
-        <item name="android:tint">@color/grey</item>
-        <item name="android:textColor">@color/black</item>
-
-    </style>
-
-
 
 </resources>

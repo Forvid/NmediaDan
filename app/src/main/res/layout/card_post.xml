@@ -6,7 +6,6 @@
     android:layout_height="wrap_content"
     android:padding="@dimen/common_spacing">
 
-
     <ImageView
         android:id="@+id/avatar"
         android:layout_width="@dimen/posts_avatar_size"
@@ -16,7 +15,6 @@
         android:src="@drawable/ic_netology_48dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
 
     <TextView
         android:id="@+id/author"
@@ -32,7 +30,6 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="@sample/posts.json/data/author" />
 
-    <!-- Дата публикации -->
     <TextView
         android:id="@+id/published"
         android:layout_width="0dp"
@@ -44,18 +41,16 @@
         app:layout_constraintTop_toBottomOf="@id/author"
         tools:text="@sample/posts.json/data/published" />
 
-    <!-- Кнопка Options (меню) -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/options"
         style="@style/Widget.AppTheme.IconButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:contentDescription="@string/description_post_menu"
-        android:drawableTop="@drawable/ic_baseline_more_vert_24"
+        app:icon="@drawable/ic_baseline_more_vert_24"
+        app:iconTint="@color/icon_gray"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <!-- Контент поста -->
 
     <TextView
         android:id="@+id/content"
@@ -66,7 +61,6 @@
         android:paddingTop="@dimen/common_spacing"
         android:paddingBottom="@dimen/common_spacing"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/published"
         tools:text="@sample/posts.json/data/content" />
@@ -78,21 +72,17 @@
         app:barrierDirection="bottom"
         app:constraint_referenced_ids="content" />
 
-
-    <com.google.android.material.checkbox.MaterialCheckBox
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/like"
-        style="@style/Widget.AppTheme.CheckBoxButton"
+        style="@style/Widget.AppTheme.LikeButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:button="@null"
-        android:checked="false"
         android:contentDescription="@string/description_post_like"
-        android:drawableStart="@drawable/ic_like_24dp"
+        app:icon="@drawable/ic_like_24dp"
+        android:textColor="@android:color/black"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/footer"
-        tools:checked="@sample/posts.json/data/likedByMe"
         tools:text="@sample/posts.json/data/likes" />
-
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/share"
@@ -101,36 +91,22 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/common_spacing"
         android:contentDescription="@string/description_post_share"
-        android:drawableTop="@drawable/ic_share_24"
+        app:icon="@drawable/ic_share_24"
+        app:iconTint="@color/icon_gray"
         app:layout_constraintStart_toEndOf="@id/like"
         app:layout_constraintTop_toBottomOf="@id/footer"
-        tools:checked="@sample/posts.json/data/shares"
-        tools:text="@sample/posts.json/data/shares"/>
-
-
+        tools:text="@sample/posts.json/data/shares" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/views"
         style="@style/Widget.AppTheme.IconButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/common_spacing"
         android:contentDescription="@string/description_post_views"
-        android:drawableTop="@drawable/ic_views_24"
+        app:icon="@drawable/ic_views_24"
+        app:iconTint="@color/icon_gray"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/content"
-        tools:checked="@sample/posts.json/data/views"
-        tools:text="@sample/posts.json/data/views"/>
-
-    <!-- Кнопка отмены редактирования -->
-    <ImageButton
-        android:id="@+id/cancel_edit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:contentDescription="@string/description_post_cancel"
-        android:src="@drawable/ic_cancel_48"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/footer"
+        tools:text="@sample/posts.json/data/views" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

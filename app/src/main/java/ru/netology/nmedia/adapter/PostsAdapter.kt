@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import ru.netology.nmedia.R
 import ru.netology.nmedia.databinding.CardPostBinding
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.util.formatCount  //  для formatCount
 
 interface OnInteractionListener {
     fun onLike(post: Post)
@@ -46,9 +47,9 @@ class PostViewHolder(
             content.text = post.content
 
             // Устанавливаем значения счетчиков
-            like.text = post.likes.toString()
-            share.text = post.shares.toString()
-            views.text = post.views.toString()
+            like.text = formatCount(post.likes)
+            share.text = formatCount(post.shares)
+            views.text = formatCount(post.views)
 
             // Устанавливаем состояние кнопки лайка
             like.isChecked = post.likedByMe
