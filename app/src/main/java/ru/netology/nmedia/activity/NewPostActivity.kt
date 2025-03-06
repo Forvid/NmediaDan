@@ -16,7 +16,10 @@ class NewPostActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false) // Исправленный вызов edge-to-edge
+
+        // Включаем edge-to-edge
+        enableEdgeToEdge()
+
         val binding = ActivityNewPostBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -39,5 +42,9 @@ class NewPostActivity : AppCompatActivity() {
             }
             finish()
         }
+    }
+
+    private fun enableEdgeToEdge() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
     }
 }

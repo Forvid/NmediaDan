@@ -1,8 +1,9 @@
 package ru.netology.nmedia.activity
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import androidx.activity.result.launch
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import ru.netology.nmedia.R
@@ -18,7 +19,7 @@ class MainActivity : AppCompatActivity() {
 
     private val newPostLauncher = registerForActivityResult(NewPostResultContract()) { result ->
         if (result == null) {
-            viewModel.clearEdit() //  метод для сброса редактирования
+            viewModel.cancelEditing()
             return@registerForActivityResult
         }
         viewModel.changeContent(result)
@@ -27,6 +28,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
         val binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -40,27 +43,46 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onEdit(post: Post) {
-                newPostLauncher.launch(post.content)
                 viewModel.edit(post)
             }
 
             override fun onShare(post: Post) {
-                val shareIntent = Intent.createChooser(Intent().apply {
-                    action = Intent.ACTION_SEND
-                    putExtra(Intent.EXTRA_TEXT, post.content)
-                    type = "text/plain"
-                }, getString(R.string.chooser_share_post))
-                startActivity(shareIntent)
+                sharePost(post.content)
+            }
+
+            override fun onVideoOpen(url: String) {
+                openVideo(url)
             }
         })
+
         binding.recyclerView.adapter = adapter
 
         viewModel.data.observe(this) { posts ->
             adapter.submitList(posts)
         }
 
+        viewModel.edited.observe(this) { post ->
+            if (post != null) {
+                newPostLauncher.launch(post.content)
+            }
+        }
+
         binding.fab.setOnClickListener {
             newPostLauncher.launch(null)
         }
+    }
+
+    private fun sharePost(content: String) {
+        val shareIntent = Intent.createChooser(Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, content)
+            type = "text/plain"
+        }, getString(R.string.chooser_share_post))
+        startActivity(shareIntent)
+    }
+
+    private fun openVideo(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        startActivity(intent)
     }
 }

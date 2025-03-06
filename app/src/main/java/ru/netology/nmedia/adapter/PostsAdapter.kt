@@ -1,7 +1,5 @@
 package ru.netology.nmedia.adapter
 
-import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -20,6 +18,7 @@ interface OnInteractionListener {
     fun onEdit(post: Post)
     fun onRemove(post: Post)
     fun onShare(post: Post)
+    fun onVideoOpen(url: String) // Новый метод для открытия видео
 }
 
 class PostAdapter(
@@ -81,15 +80,10 @@ class PostViewHolder(
                 videoLayout.visibility = View.GONE
             } else {
                 videoLayout.visibility = View.VISIBLE
-                videoLayout.setOnClickListener { openVideo(post.video) }
-                playButton.setOnClickListener { openVideo(post.video) }
+                videoLayout.setOnClickListener { onInteractionListener.onVideoOpen(post.video) }
+                playButton.setOnClickListener { onInteractionListener.onVideoOpen(post.video) }
             }
         }
-    }
-
-    private fun openVideo(url: String) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-        itemView.context.startActivity(intent)
     }
 }
 
