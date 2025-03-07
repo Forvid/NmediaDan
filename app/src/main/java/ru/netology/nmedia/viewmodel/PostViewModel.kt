@@ -1,10 +1,12 @@
 package ru.netology.nmedia.viewmodel
 
 import android.app.Application
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.repository.PostRepository
 import ru.netology.nmedia.repository.PostRepositoryFileImpl
-import ru.netology.nmedia.dto.Post
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: PostRepository = PostRepositoryFileImpl(application)
@@ -20,9 +22,18 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         _edited.value = post
     }
 
+    fun createNewPost() {
+        _edited.value = Post(
+            id = 0,
+            author = "Me",
+            content = "",
+            published = "Сегодня"
+        )
+    }
+
     fun changeContent(content: String) {
         val text = content.trim()
-        val post = _edited.value ?: return // Исправлено: не вызывает copy() у null
+        val post = _edited.value ?: return
         if (post.content == text) return
         _edited.value = post.copy(content = text)
     }
@@ -30,9 +41,9 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun save() {
         _edited.value?.let { post ->
             if (post.id == 0L) {
-                repository.save(post) // Новый пост
+                repository.save(post) // Создание нового поста
             } else {
-                repository.update(post) // Обновление
+                repository.update(post) // Обновление существующего
             }
         }
         _edited.value = null

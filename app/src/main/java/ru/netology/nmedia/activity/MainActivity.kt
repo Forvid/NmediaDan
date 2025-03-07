@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onEdit(post: Post) {
                 viewModel.edit(post)
+                newPostLauncher.launch(post.content)
             }
 
             override fun onShare(post: Post) {
@@ -61,13 +62,8 @@ class MainActivity : AppCompatActivity() {
             adapter.submitList(posts)
         }
 
-        viewModel.edited.observe(this) { post ->
-            if (post != null) {
-                newPostLauncher.launch(post.content)
-            }
-        }
-
         binding.fab.setOnClickListener {
+            viewModel.createNewPost() // новый пост перед открытием редактора
             newPostLauncher.launch(null)
         }
     }
