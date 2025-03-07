@@ -22,8 +22,9 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun changeContent(content: String) {
         val text = content.trim()
-        if (_edited.value?.content == text) return
-        _edited.value = _edited.value?.copy(content = text)
+        val post = _edited.value ?: return // Исправлено: не вызывает copy() у null
+        if (post.content == text) return
+        _edited.value = post.copy(content = text)
     }
 
     fun save() {
