@@ -2,11 +2,15 @@ package ru.netology.nmedia.repository
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import ru.netology.nmedia.api.ApiModule
 import ru.netology.nmedia.dto.Post
 
 class PostRepositoryInMemoryImpl : PostRepository {
     private var nextId = 1L
-    private var posts = listOf(
+    private var posts = mutableListOf(
         Post(
             id = nextId++,
             author = "Нетология. Университет интернет-профессий будущего",
@@ -70,58 +74,67 @@ class PostRepositoryInMemoryImpl : PostRepository {
             published = "23 сентября в 10:12",
             likedByMe = false
         ),
-    ).reversed()
+    ).apply { reverse() }
 
-    private val data = MutableLiveData(posts)
+    private val _data = MutableLiveData<List<Post>>(posts.toList())
+    override fun getAll(): LiveData<List<Post>> = _data
 
-    override fun getAll(): LiveData<List<Post>> = data
+    // Для сетевых запросов лайка/анлайка
+    private val api = ApiModule.postsApi
 
     override fun save(post: Post) {
         if (post.id == 0L) {
-            // Создание нового поста
-            posts = listOf(
-                post.copy(
-                    id = nextId++,
-                    author = "Me",
-                    likedByMe = false,
-                    published = "now"
-                )
-            ) + posts
+            // Создаём новый
+            val newPost = post.copy(
+                id = nextId++,
+                author = "Me",
+                likedByMe = false,
+                published = "now"
+            )
+            posts.add(0, newPost)
         } else {
-            // Обновление существующего поста
-            posts = posts.map {
-                if (it.id != post.id) it else it.copy(content = post.content)
+            // Обновляем только content
+            posts.replaceAll {
+                if (it.id == post.id) it.copy(content = post.content) else it
             }
         }
-        data.value = posts
+        _data.value = posts.toList()
     }
 
-    override fun likeById(id: Long) {
-        posts = posts.map {
-            if (it.id != id) it else it.copy(
-                likedByMe = !it.likedByMe,
-                likes = if (it.likedByMe) it.likes - 1 else it.likes + 1
-            )
+    override fun removeById(postId: Long) {
+        posts.removeAll { it.id == postId }
+        _data.value = posts.toList()
+    }
+
+    override fun likeById(postId: Long) {
+        // делаем запрос на фоне
+        CoroutineScope(Dispatchers.IO).launch {
+            val old = posts.first { it.id == postId }
+            val response = if (old.likedByMe) {
+                api.unlike(postId)
+            } else {
+                api.like(postId)
+            }
+            if (response.isSuccessful) {
+                // получили обновлённый пост
+                response.body()?.let { updated ->
+                    posts.replaceAll { if (it.id == postId) updated else it }
+                    _data.postValue(posts.toList())
+                }
+            }
         }
-        data.value = posts
-    }
-
-    override fun removeById(id: Long) {
-        posts = posts.filter { it.id != id }
-        data.value = posts
     }
 
     override fun update(post: Post) {
-        posts = posts.map {
-            if (it.id == post.id) post else it
-        }
-        data.value = posts
+        // чисто локальный update
+        posts.replaceAll { if (it.id == post.id) post else it }
+        _data.value = posts.toList()
     }
 
-    override fun shareById(id: Long) {
-        posts = posts.map {
-            if (it.id == id) it.copy(shares = it.shares + 1) else it
+    override fun shareById(postId: Long) {
+        posts.replaceAll {
+            if (it.id == postId) it.copy(shares = it.shares + 1) else it
         }
-        data.value = posts
+        _data.value = posts.toList()
     }
 }

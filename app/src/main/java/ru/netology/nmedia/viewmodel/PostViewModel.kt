@@ -5,18 +5,25 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.repository.PostRepositoryInMemoryImpl
 import ru.netology.nmedia.repository.PostRepository
-import ru.netology.nmedia.repository.PostRepositoryFileImpl
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository: PostRepository = PostRepositoryFileImpl(application)
+
+    // Используем именно in‑memory реализацию
+    private val repository: PostRepository = PostRepositoryInMemoryImpl()
+
+    // Всё, что нам выдал репозиторий
     val data: LiveData<List<Post>> = repository.getAll()
 
+    // Сейчас редактируемый пост
     private val _edited = MutableLiveData<Post?>()
     val edited: LiveData<Post?> get() = _edited
 
-    fun likeById(id: Long) = repository.likeById(id)
-    fun removeById(id: Long) = repository.removeById(id)
+    // Лайк/Удалить/Редактировать/Создать/Сохранить
+
+    fun likeById(postId: Long) = repository.likeById(postId)
+    fun removeById(postId: Long) = repository.removeById(postId)
 
     fun edit(post: Post) {
         _edited.value = post
@@ -25,9 +32,9 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun createNewPost() {
         _edited.value = Post(
             id = 0,
-            author = "Me",
+            author = "я",
             content = "",
-            published = "Сегодня"
+            published = "сегодня"
         )
     }
 
@@ -40,11 +47,8 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun save() {
         _edited.value?.let { post ->
-            if (post.id == 0L) {
-                repository.save(post) // Создание нового поста
-            } else {
-                repository.update(post) // Обновление существующего
-            }
+            if (post.id == 0L) repository.save(post)
+            else                 repository.update(post)
         }
         _edited.value = null
     }
