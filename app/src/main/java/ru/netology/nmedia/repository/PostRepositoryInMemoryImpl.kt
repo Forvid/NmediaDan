@@ -84,7 +84,7 @@ class PostRepositoryInMemoryImpl : PostRepository {
 
     override fun save(post: Post) {
         if (post.id == 0L) {
-            // Создаём новый
+
             val newPost = post.copy(
                 id = nextId++,
                 author = "Me",
@@ -93,7 +93,7 @@ class PostRepositoryInMemoryImpl : PostRepository {
             )
             posts.add(0, newPost)
         } else {
-            // Обновляем только content
+
             posts.replaceAll {
                 if (it.id == post.id) it.copy(content = post.content) else it
             }
@@ -107,7 +107,7 @@ class PostRepositoryInMemoryImpl : PostRepository {
     }
 
     override fun likeById(postId: Long) {
-        // делаем запрос на фоне
+
         CoroutineScope(Dispatchers.IO).launch {
             val old = posts.first { it.id == postId }
             val response = if (old.likedByMe) {
@@ -126,7 +126,7 @@ class PostRepositoryInMemoryImpl : PostRepository {
     }
 
     override fun update(post: Post) {
-        // чисто локальный update
+
         posts.replaceAll { if (it.id == post.id) post else it }
         _data.value = posts.toList()
     }

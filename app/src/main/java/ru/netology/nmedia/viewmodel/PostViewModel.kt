@@ -10,7 +10,7 @@ import ru.netology.nmedia.repository.PostRepository
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
 
-    // Используем именно in‑memory реализацию
+    // Используем in‑memory реализацию
     private val repository: PostRepository = PostRepositoryInMemoryImpl()
 
     // Всё, что нам выдал репозиторий
