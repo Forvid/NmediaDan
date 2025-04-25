@@ -5,18 +5,13 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import ru.netology.nmedia.dto.Post
-import ru.netology.nmedia.repository.PostRepositoryInMemoryImpl
 import ru.netology.nmedia.repository.PostRepository
+import ru.netology.nmedia.repository.PostRepositoryFileImpl
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository: PostRepository = PostRepositoryFileImpl(application)
+    val data = repository.getAll()
 
-    // Используем in‑memory реализацию
-    private val repository: PostRepository = PostRepositoryInMemoryImpl()
-
-    // Всё, что нам выдал репозиторий
-    val data: LiveData<List<Post>> = repository.getAll()
-
-    // Сейчас редактируемый пост
     private val _edited = MutableLiveData<Post?>()
     val edited: LiveData<Post?> get() = _edited
 
