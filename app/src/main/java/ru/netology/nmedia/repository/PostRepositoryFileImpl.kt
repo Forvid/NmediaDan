@@ -17,7 +17,7 @@ class PostRepositoryFileImpl(context: Context) : PostRepository {
     private val file = File(context.filesDir, "posts.json")
     private val type = TypeToken.getParameterized(List::class.java, Post::class.java).type
 
-    // Настраиваем OkHttpClient с таймаутами
+    //  OkHttpClient с таймаутами
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
@@ -57,7 +57,7 @@ class PostRepositoryFileImpl(context: Context) : PostRepository {
     }
 
     override fun save(post: Post) {
-        // выберем метод и URL; создадим JSON-тело
+        //  метод и URL; создание JSON-тело
         val (method, url, body) = if (post.id == 0L) {
             val json = gson.toJson(post)
             Triple(
@@ -148,7 +148,7 @@ class PostRepositoryFileImpl(context: Context) : PostRepository {
         saveToFile()
     }
 
-    // Синхронизировать один пост в локальном кэше
+    // Синхронизация одного поста в локальном кэше
     private fun syncLocal(updated: Post) {
         posts.replaceAll { if (it.id == updated.id) updated else it }
     }
