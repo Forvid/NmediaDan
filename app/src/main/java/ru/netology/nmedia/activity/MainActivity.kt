@@ -16,7 +16,6 @@ import ru.netology.nmedia.viewmodel.PostViewModel
 
 class MainActivity : AppCompatActivity() {
 
-    // Используем фабрику, т.к. ViewModel — AndroidViewModel
     private val viewModel: PostViewModel by viewModels {
         PostViewModel.provideFactory(application)
     }
@@ -43,14 +42,13 @@ class MainActivity : AppCompatActivity() {
             override fun onVideoOpen(url: String) = openVideo(url)
             override fun onEdit(post: Post)    = viewModel.edit(post)
         })
+
         binding.recyclerView.adapter = adapter
 
-        // Подписываемся на список постов
         viewModel.data.observe(this) { posts ->
             adapter.submitList(posts)
         }
 
-        // При смене edited открываем редактор
         viewModel.edited.observe(this) { post ->
             post?.let {
                 newPostLauncher.launch(it.content)
@@ -58,8 +56,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.fab.setOnClickListener {
-            viewModel.createNewPost()   // подготовить новый пустой пост
-            newPostLauncher.launch(null)
+            viewModel.createNewPost()
+            // УБРАН newPostLauncher.launch(null)
         }
     }
 
