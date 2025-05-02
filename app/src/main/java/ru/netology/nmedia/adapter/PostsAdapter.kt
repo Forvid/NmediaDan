@@ -12,6 +12,7 @@ import ru.netology.nmedia.R
 import ru.netology.nmedia.databinding.CardPostBinding
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.util.formatCount
+import com.bumptech.glide.Glide
 
 interface OnInteractionListener {
     fun onLike(post: Post)
@@ -41,9 +42,18 @@ class PostViewHolder(
     private val onInteractionListener: OnInteractionListener,
 ) : RecyclerView.ViewHolder(binding.root) {
 
+    private val avatarBaseUrl = "http://10.0.2.2:9999/avatars/"
+
     fun bind(post: Post) {
         binding.apply {
-            Log.d("PostAdapter", "Binding post: ${post.id}, likes: ${post.likes}, shares: ${post.shares}")
+            // Загрузка аватара
+            Glide.with(avatar.context)
+                .load(avatarBaseUrl + post.authorAvatar)
+                .placeholder(R.drawable.ic_loading_100dp)
+                .error(R.drawable.ic_error_100dp)
+                .circleCrop()
+                .into(avatar)
+
 
             author.text = post.author
             published.text = post.published
