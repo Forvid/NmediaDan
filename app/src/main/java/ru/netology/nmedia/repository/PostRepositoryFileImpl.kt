@@ -17,7 +17,7 @@ class PostRepositoryFileImpl(context: Context) : PostRepository {
     private val file = File(context.filesDir, "posts.json")
     private val type = TypeToken.getParameterized(List::class.java, Post::class.java).type
 
-    //  OkHttpClient с таймаутами
+    // OkHttpClient с таймаутами
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
@@ -30,11 +30,11 @@ class PostRepositoryFileImpl(context: Context) : PostRepository {
     private val _data = MutableLiveData<List<Post>>(emptyList())
 
     override fun getAll(): LiveData<List<Post>> {
-        // 1) Загрузить из файла
+        // 1) Загрузка из файла
         loadFromFile()
         _data.value = posts.toList()
 
-        // 2) Подтянуть с сервера
+        // 2) Подтягиваем с сервера
         val request = Request.Builder()
             .url("$baseUrl/api/posts")
             .get()
@@ -57,26 +57,13 @@ class PostRepositoryFileImpl(context: Context) : PostRepository {
     }
 
     override fun save(post: Post) {
-        //  метод и URL; создание JSON-тело
-        val (method, url, body) = if (post.id == 0L) {
-            val json = gson.toJson(post)
-            Triple(
-                "POST",
-                "$baseUrl/api/posts",
-                json.toRequestBody("application/json".toMediaTypeOrNull())
-            )
-        } else {
-            val json = gson.toJson(post)
-            Triple(
-                "PUT",
-                "$baseUrl/api/posts/${post.id}",
-                json.toRequestBody("application/json".toMediaTypeOrNull())
-            )
-        }
+        // Всегда POST /api/posts
+        val json = gson.toJson(post)
+        val body = json.toRequestBody("application/json".toMediaTypeOrNull())
 
         val request = Request.Builder()
-            .url(url)
-            .method(method, body)
+            .url("$baseUrl/api/posts")
+            .post(body)
             .build()
 
         client.newCall(request).enqueue(object : Callback {
@@ -97,7 +84,6 @@ class PostRepositoryFileImpl(context: Context) : PostRepository {
     override fun likeById(postId: Long) {
         val old = posts.firstOrNull { it.id == postId } ?: return
         val method = if (old.likedByMe) "DELETE" else "POST"
-        // для POST /likes нужно пустое тело, для DELETE — null
         val body = if (method == "POST") ByteArray(0).toRequestBody() else null
 
         val request = Request.Builder()
@@ -119,8 +105,10 @@ class PostRepositoryFileImpl(context: Context) : PostRepository {
     }
 
     override fun shareById(postId: Long) {
-        // локально увеличиваем счётчик, без серверного запроса
-        posts.replaceAll { if (it.id == postId) it.copy(shares = it.shares + 1) else it }
+        // локально
+        posts.replaceAll {
+            if (it.id == postId) it.copy(shares = it.shares + 1) else it
+        }
         persistAndSaveFile()
     }
 
@@ -142,28 +130,27 @@ class PostRepositoryFileImpl(context: Context) : PostRepository {
         })
     }
 
-    // Обновить LiveData и сохранить в файл
+    // --- Вспомогательные методы ---
+
+    private fun syncLocal(updated: Post) {
+        // если уже есть — заменяем, иначе вставляем в начало
+        if (posts.any { it.id == updated.id }) {
+            posts.replaceAll { if (it.id == updated.id) updated else it }
+        } else {
+            posts.add(0, updated)
+        }
+    }
+
     private fun persistAndSaveFile() {
         _data.postValue(posts.toList())
         saveToFile()
     }
 
-    private fun syncLocal(updated: Post) {
-        // Если такой id уже есть — заменяем, иначе добавляем в начало
-        val exists = posts.any { it.id == updated.id }
-        if (exists) {
-            posts.replaceAll { if (it.id == updated.id) updated else it }
-        } else {
-            posts.add(0, updated)
-        }
-        persistAndSaveFile()
-    }
-
-    // Загрузка кеша из файла
     private fun loadFromFile() {
         if (!file.exists()) return
         try {
             BufferedReader(FileReader(file)).use { reader ->
+                @Suppress("UNCHECKED_CAST")
                 val list: List<Post> = gson.fromJson(reader, type) ?: emptyList()
                 posts = list.toMutableList()
             }
@@ -172,7 +159,6 @@ class PostRepositoryFileImpl(context: Context) : PostRepository {
         }
     }
 
-    // Сохранение кеша в файл
     private fun saveToFile() {
         try {
             BufferedWriter(FileWriter(file)).use { writer ->
