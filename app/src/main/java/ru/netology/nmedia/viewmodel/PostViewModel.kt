@@ -39,12 +39,14 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
 
-    fun changeContent(content: String) {
+    fun changeContentAndSave(content: String) {
         val text = content.trim()
         val post = _edited.value ?: return
         if (post.content != text) {
-            _edited.value = post.copy(content = text)
+            // Если это новый пост (id = 0) — POST, иначе POST (т.к. сервер не поддерживает PUT)
+            repository.save(post.copy(content = text))
         }
+        _edited.value = null
     }
 
 

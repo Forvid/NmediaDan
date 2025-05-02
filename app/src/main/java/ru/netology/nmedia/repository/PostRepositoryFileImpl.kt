@@ -148,9 +148,15 @@ class PostRepositoryFileImpl(context: Context) : PostRepository {
         saveToFile()
     }
 
-    // Синхронизация одного поста в локальном кэше
     private fun syncLocal(updated: Post) {
-        posts.replaceAll { if (it.id == updated.id) updated else it }
+        // Если такой id уже есть — заменяем, иначе добавляем в начало
+        val exists = posts.any { it.id == updated.id }
+        if (exists) {
+            posts.replaceAll { if (it.id == updated.id) updated else it }
+        } else {
+            posts.add(0, updated)
+        }
+        persistAndSaveFile()
     }
 
     // Загрузка кеша из файла

@@ -25,8 +25,7 @@ class MainActivity : AppCompatActivity() {
         if (result == null) {
             viewModel.cancelEditing()
         } else {
-            viewModel.changeContent(result)
-            viewModel.save()
+            viewModel.changeContentAndSave(result)
         }
     }
 
@@ -59,7 +58,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.fab.setOnClickListener {
-            viewModel.createNewPost()
+            viewModel.createNewPost()   // подготовить новый пустой пост
+            newPostLauncher.launch(null)
         }
     }
 
