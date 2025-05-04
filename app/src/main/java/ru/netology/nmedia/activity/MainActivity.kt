@@ -7,14 +7,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.launch
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.snackbar.Snackbar
 import ru.netology.nmedia.R
 import ru.netology.nmedia.adapter.OnInteractionListener
 import ru.netology.nmedia.adapter.PostAdapter
 import ru.netology.nmedia.databinding.ActivityMainBinding
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.util.Result
 import ru.netology.nmedia.viewmodel.PostViewModel
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityMainBinding
 
     private val viewModel: PostViewModel by viewModels {
         PostViewModel.provideFactory(application)
@@ -31,22 +34,32 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        val binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val adapter = PostAdapter(object : OnInteractionListener {
-            override fun onLike(post: Post)    = viewModel.likeById(post.id)
-            override fun onRemove(post: Post)  = viewModel.removeById(post.id)
-            override fun onShare(post: Post)   = sharePost(post.content)
-            override fun onVideoOpen(url: String) = openVideo(url)
-            override fun onEdit(post: Post)    = viewModel.edit(post)
-        })
+        viewModel.error.observe(this) { err ->
+            Snackbar.make(
+                binding.root,
+                "Ошибка ${err.code}: ${err.errorBody ?: "нет тела"}",
+                Snackbar.LENGTH_INDEFINITE
+            )
+                .setAction("Повторить") {
+                    viewModel.loadAll()
+                }
+                .show()
+        }
 
+        val adapter = PostAdapter(object : OnInteractionListener {
+            override fun onLike(post: Post)     = viewModel.likeById(post.id)
+            override fun onRemove(post: Post)   = viewModel.removeById(post.id)
+            override fun onShare(post: Post)    = sharePost(post.content)
+            override fun onVideoOpen(url: String)= openVideo(url)
+            override fun onEdit(post: Post)     = viewModel.edit(post)
+        })
         binding.recyclerView.adapter = adapter
 
-        viewModel.data.observe(this) { posts ->
-            adapter.submitList(posts)
+        viewModel.data.observe(this) { list ->
+            adapter.submitList(list)
         }
 
         viewModel.edited.observe(this) { post ->
@@ -57,18 +70,20 @@ class MainActivity : AppCompatActivity() {
 
         binding.fab.setOnClickListener {
             viewModel.createNewPost()
-            // УБРАН newPostLauncher.launch(null)
         }
+
+        viewModel.loadAll()
     }
 
     private fun sharePost(content: String) {
-        val intent = Intent.createChooser(
-            Intent(Intent.ACTION_SEND)
-                .putExtra(Intent.EXTRA_TEXT, content)
-                .setType("text/plain"),
-            getString(R.string.chooser_share_post)
+        startActivity(
+            Intent.createChooser(
+                Intent(Intent.ACTION_SEND)
+                    .putExtra(Intent.EXTRA_TEXT, content)
+                    .setType("text/plain"),
+                getString(R.string.chooser_share_post)
+            )
         )
-        startActivity(intent)
     }
 
     private fun openVideo(url: String) {

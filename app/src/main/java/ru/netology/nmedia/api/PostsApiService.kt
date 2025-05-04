@@ -11,7 +11,7 @@ interface PostsApiService {
     @POST("api/posts")
     suspend fun create(@Body post: Post): Response<Post>
 
-    @PUT("api/posts/{id}")
+    @POST("api/posts/{id}")
     suspend fun update(@Path("id") id: Long, @Body post: Post): Response<Post>
 
     @POST("api/posts/{id}/likes")
@@ -19,4 +19,7 @@ interface PostsApiService {
 
     @DELETE("api/posts/{id}/likes")
     suspend fun unlike(@Path("id") id: Long): Response<Post>
+
+    @DELETE("api/posts/{id}")
+    suspend fun delete(@Path("id") id: Long): Response<Unit>
 }
