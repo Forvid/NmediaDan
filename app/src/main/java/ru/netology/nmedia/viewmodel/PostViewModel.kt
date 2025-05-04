@@ -1,22 +1,77 @@
 package ru.netology.nmedia.viewmodel
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.*
 import ru.netology.nmedia.dto.Post
-import ru.netology.nmedia.repository.PostRepository
-import ru.netology.nmedia.repository.PostRepositoryFileImpl
+import ru.netology.nmedia.repository.PostRepositoryRetrofitImpl
+import ru.netology.nmedia.util.Result
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository: PostRepository = PostRepositoryFileImpl(application)
-    val data: LiveData<List<Post>> = repository.getAll()
+    private val repository = PostRepositoryRetrofitImpl()
+
+    private val _error = MutableLiveData<Result.Error>()
+    val error: LiveData<Result.Error> = _error
+
+    private val _data = MediatorLiveData<List<Post>>()
+    val data: LiveData<List<Post>> = _data
 
     private val _edited = MutableLiveData<Post?>()
-    val edited: LiveData<Post?> get() = _edited
+    val edited: LiveData<Post?> = _edited
 
-    fun likeById(id: Long) = repository.likeById(id)
-    fun removeById(id: Long) = repository.removeById(id)
+    init {
+        loadAll()
+    }
+
+    fun loadAll() {
+        // получаем LiveData<Result<List<Post>>> от репозитория
+        val source: LiveData<Result<List<Post>>> = repository.getAll()
+        _data.addSource(source) { result ->
+            when (result) {
+                is Result.Success<List<Post>> -> _data.value = result.data
+                is Result.Error               -> _error.value = result
+                is Result.Exception           -> _error.value = Result.Error(-1, result.exception.message)
+            }
+            _data.removeSource(source)
+        }
+    }
+
+    fun likeById(id: Long) {
+        val source: LiveData<Result<Post>> = repository.likeById(id)
+        _data.addSource(source) { result ->
+            when (result) {
+                is Result.Success<Post>   -> loadAll()
+                is Result.Error           -> _error.value = result
+                is Result.Exception       -> _error.value = Result.Error(-1, result.exception.message)
+            }
+            _data.removeSource(source)
+        }
+    }
+
+    fun save(post: Post) {
+        val source: LiveData<Result<Post>> = repository.save(post)
+        _data.addSource(source) { result ->
+            when (result) {
+                is Result.Success<Post>   -> loadAll()
+                is Result.Error           -> _error.value = result
+                is Result.Exception       -> _error.value = Result.Error(-1, result.exception.message)
+            }
+            _data.removeSource(source)
+        }
+    }
+
+    fun removeById(id: Long) {
+        val source: LiveData<Result<Unit>> = repository.removeById(id)
+        _data.addSource(source) { result ->
+            when (result) {
+                is Result.Success<Unit>   -> loadAll()
+                is Result.Error           -> _error.value = result
+                is Result.Exception       -> _error.value = Result.Error(-1, result.exception.message)
+            }
+            _data.removeSource(source)
+        }
+    }
+
+    // --- Методы для UI-редактирования ---
 
     fun edit(post: Post) {
         _edited.value = post
@@ -24,32 +79,33 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun createNewPost() {
         _edited.value = Post(
-            id = 0,
+            id = 0L,
             author = "Me",
             content = "",
-            published = "Сегодня"
+            published = ""
         )
     }
 
-    fun changeContent(content: String) {
-        val text = content.trim()
+    fun changeContentAndSave(content: String) {
         val post = _edited.value ?: return
-        if (post.content == text) return
-        _edited.value = post.copy(content = text)
-    }
-
-    fun save() {
-        _edited.value?.let { post ->
-            if (post.id == 0L) {
-                repository.save(post) // Создание нового поста
-            } else {
-                repository.update(post) // Обновление существующего
-            }
+        val text = content.trim()
+        if (post.content != text) {
+            save(post.copy(content = text))
         }
         _edited.value = null
     }
 
     fun cancelEditing() {
         _edited.value = null
+    }
+
+
+    companion object {
+        fun provideFactory(app: Application): ViewModelProvider.Factory =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                    PostViewModel(app) as T
+            }
     }
 }

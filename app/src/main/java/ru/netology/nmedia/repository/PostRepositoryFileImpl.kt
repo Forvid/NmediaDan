@@ -1,97 +1,108 @@
 package ru.netology.nmedia.repository
 
-import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.*
+import ru.netology.nmedia.api.ApiModule
 import ru.netology.nmedia.dto.Post
-import java.io.*
+import ru.netology.nmedia.util.Result
 
-class PostRepositoryFileImpl(
-    context: Context
-) : PostRepository {
-    private val gson = Gson()
-    private val file by lazy { File(context.filesDir, "posts.json") }
-    private val type = TypeToken.getParameterized(List::class.java, Post::class.java).type
-    private var nextId = 1L
-    private var posts = listOf<Post>()
-    private val data = MutableLiveData(posts)
+class PostRepositoryRetrofitImpl : PostRepository {
+    private val api = ApiModule.postsApi
+    private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    init {
-        loadFromFile()
+    override fun getAll(): LiveData<Result<List<Post>>> {
+        val result = MutableLiveData<Result<List<Post>>>()
+        ioScope.launch {
+            runCatching { api.getAll() }
+                .onSuccess { resp ->
+                    if (resp.isSuccessful) {
+                        result.postValue(Result.Success(resp.body()!!))
+                    } else {
+                        result.postValue(Result.Error(resp.code(), resp.errorBody()?.string()))
+                    }
+                }
+                .onFailure { ex ->
+                    result.postValue(Result.Exception(ex as Exception))
+                }
+        }
+        return result
     }
 
-    private fun loadFromFile() {
-        if (!file.exists()) return
-        try {
-            BufferedReader(FileReader(file)).use {
-                posts = gson.fromJson(it, type) ?: emptyList()
-                nextId = (posts.maxOfOrNull { post -> post.id } ?: 0L) + 1
-                data.value = posts
+    override fun save(post: Post): LiveData<Result<Post>> {
+        val result = MutableLiveData<Result<Post>>()
+        ioScope.launch {
+            runCatching {
+                if (post.id == 0L) api.create(post)
+                else              api.create(post.copy(id = post.id)) // всегда POST
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+                .onSuccess { resp ->
+                    if (resp.isSuccessful) {
+                        result.postValue(Result.Success(resp.body()!!))
+                    } else {
+                        result.postValue(Result.Error(resp.code(), resp.errorBody()?.string()))
+                    }
+                }
+                .onFailure { t ->
+                    result.postValue(Result.Exception(t as Exception))
+                }
         }
+        return result
     }
 
-    override fun getAll(): LiveData<List<Post>> = data
+    override fun update(post: Post): LiveData<Result<Post>> = save(post)
 
-    override fun save(post: Post) {
-        posts = if (post.id == 0L) {
-            listOf(
-                post.copy(
-                    id = nextId++,
-                    author = "Me",
-                    likedByMe = false,
-                    published = "now"
-                )
-            ) + posts
-        } else {
-            posts.map { if (it.id == post.id) it.copy(content = post.content) else it }
-        }
-        data.value = posts
-        saveToFile()
-    }
-
-    override fun likeById(id: Long) {
-        posts = posts.map {
-            if (it.id != id) it else it.copy(
-                likedByMe = !it.likedByMe,
-                likes = if (it.likedByMe) it.likes - 1 else it.likes + 1
-            )
-        }
-        data.value = posts
-        saveToFile()
-    }
-
-    override fun removeById(id: Long) {
-        posts = posts.filter { it.id != id }
-        data.value = posts
-        saveToFile()
-    }
-
-    override fun update(post: Post) {
-        posts = posts.map { if (it.id == post.id) post else it }
-        data.value = posts
-        saveToFile()
-    }
-
-    override fun shareById(id: Long) {
-        posts = posts.map {
-            if (it.id == id) it.copy(shares = it.shares + 1) else it
-        }
-        data.value = posts
-        saveToFile()
-    }
-
-    private fun saveToFile() {
-        try {
-            BufferedWriter(FileWriter(file)).use {
-                gson.toJson(posts, it)
+    override fun likeById(postId: Long): LiveData<Result<Post>> {
+        val result = MutableLiveData<Result<Post>>()
+        ioScope.launch {
+            val allResp = api.getAll()
+            if (!allResp.isSuccessful) {
+                result.postValue(Result.Error(allResp.code(), allResp.errorBody()?.string()))
+                return@launch
             }
-        } catch (e: IOException) {
-            e.printStackTrace()
+            val old = allResp.body()!!.first { it.id == postId }
+            runCatching {
+                if (old.likedByMe) api.unlike(postId) else api.like(postId)
+            }
+                .onSuccess { resp ->
+                    if (resp.isSuccessful) {
+                        result.postValue(Result.Success(resp.body()!!))
+                    } else {
+                        result.postValue(Result.Error(resp.code(), resp.errorBody()?.string()))
+                    }
+                }
+                .onFailure { t ->
+                    result.postValue(Result.Exception(t as Exception))
+                }
         }
+        return result
+    }
+
+    override fun shareById(postId: Long): LiveData<Result<Post>> {
+        // сервер не обрабатывает shares, имитируем локально + POST
+        val dummy = MutableLiveData<Result<Post>>()
+        ioScope.launch {
+            // здесь просто возвращаем ошибку по умолчанию или успех без тела
+            dummy.postValue(Result.Error(501, "Не поддерживается"))
+        }
+        return dummy
+    }
+
+    override fun removeById(postId: Long): LiveData<Result<Unit>> {
+        val result = MutableLiveData<Result<Unit>>()
+        ioScope.launch {
+            runCatching { api.delete(postId) }
+                .onSuccess { resp ->
+                    if (resp.isSuccessful) {
+                        result.postValue(Result.Success(Unit))
+                    } else {
+                        result.postValue(Result.Error(resp.code(), resp.errorBody()?.string()))
+                    }
+                }
+                .onFailure { t ->
+                    result.postValue(Result.Exception(t as Exception))
+                }
+        }
+        return result
     }
 }

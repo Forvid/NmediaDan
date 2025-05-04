@@ -9,6 +9,7 @@ data class Post(
     val shares: Int = 0,
     val views: Int = 0,
     val likedByMe: Boolean = false,
-    val video: String? = null // ссылка на YouTube
+    val video: String? = null,
+    val authorAvatar: String? = null
 )
 
