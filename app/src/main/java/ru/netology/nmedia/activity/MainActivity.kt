@@ -23,6 +23,8 @@ class MainActivity : AppCompatActivity() {
         PostViewModel.provideFactory(application)
     }
 
+    private var lastAction: (() -> Unit)? = null
+
     private val newPostLauncher = registerForActivityResult(NewPostResultContract()) { result ->
         if (result == null) {
             viewModel.cancelEditing()
@@ -37,25 +39,24 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        viewModel.error.observe(this) { err ->
-            Snackbar.make(
-                binding.root,
-                "Ошибка ${err.code}: ${err.errorBody ?: "нет тела"}",
-                Snackbar.LENGTH_INDEFINITE
-            )
-                .setAction("Повторить") {
-                    viewModel.loadAll()
-                }
-                .show()
-        }
-
         val adapter = PostAdapter(object : OnInteractionListener {
-            override fun onLike(post: Post)     = viewModel.likeById(post.id)
-            override fun onRemove(post: Post)   = viewModel.removeById(post.id)
-            override fun onShare(post: Post)    = sharePost(post.content)
-            override fun onVideoOpen(url: String)= openVideo(url)
-            override fun onEdit(post: Post)     = viewModel.edit(post)
+            override fun onLike(post: Post) {
+                lastAction = { viewModel.likeById(post.id) }
+                viewModel.likeById(post.id)
+            }
+
+            override fun onRemove(post: Post) {
+                lastAction = { viewModel.removeById(post.id) }
+                viewModel.removeById(post.id)
+            }
+
+            override fun onShare(post: Post) = sharePost(post.content)
+
+            override fun onVideoOpen(url: String) = openVideo(url)
+
+            override fun onEdit(post: Post) = viewModel.edit(post)
         })
+
         binding.recyclerView.adapter = adapter
 
         viewModel.data.observe(this) { list ->
@@ -68,10 +69,24 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        viewModel.error.observe(this) { err ->
+            Snackbar.make(
+                binding.root,
+                "Ошибка ${err.code}: ${err.errorBody ?: "нет тела"}",
+                Snackbar.LENGTH_INDEFINITE
+            )
+                .setAction("Повторить") {
+                    lastAction?.invoke() ?: viewModel.loadAll()
+                }
+                .show()
+        }
+
         binding.fab.setOnClickListener {
             viewModel.createNewPost()
         }
 
+        // Первая загрузка — сохранить как последнее действие
+        lastAction = { viewModel.loadAll() }
         viewModel.loadAll()
     }
 

@@ -55,25 +55,18 @@ class PostRepositoryRetrofitImpl : PostRepository {
     override fun likeById(postId: Long): LiveData<Result<Post>> {
         val result = MutableLiveData<Result<Post>>()
         ioScope.launch {
-            val allResp = api.getAll()
-            if (!allResp.isSuccessful) {
-                result.postValue(Result.Error(allResp.code(), allResp.errorBody()?.string()))
-                return@launch
-            }
-            val old = allResp.body()!!.first { it.id == postId }
             runCatching {
-                if (old.likedByMe) api.unlike(postId) else api.like(postId)
+                val resp = api.like(postId)
+                if (!resp.isSuccessful) {
+                    Result.Error(resp.code(), resp.errorBody()?.string())
+                } else {
+                    Result.Success(resp.body()!!)
+                }
+            }.onSuccess {
+                result.postValue(it)
+            }.onFailure {
+                result.postValue(Result.Exception(it as Exception))
             }
-                .onSuccess { resp ->
-                    if (resp.isSuccessful) {
-                        result.postValue(Result.Success(resp.body()!!))
-                    } else {
-                        result.postValue(Result.Error(resp.code(), resp.errorBody()?.string()))
-                    }
-                }
-                .onFailure { t ->
-                    result.postValue(Result.Exception(t as Exception))
-                }
         }
         return result
     }
@@ -91,18 +84,19 @@ class PostRepositoryRetrofitImpl : PostRepository {
     override fun removeById(postId: Long): LiveData<Result<Unit>> {
         val result = MutableLiveData<Result<Unit>>()
         ioScope.launch {
-            runCatching { api.delete(postId) }
-                .onSuccess { resp ->
-                    if (resp.isSuccessful) {
-                        result.postValue(Result.Success(Unit))
-                    } else {
-                        result.postValue(Result.Error(resp.code(), resp.errorBody()?.string()))
-                    }
+            runCatching {
+                val resp = api.delete(postId)
+                if (!resp.isSuccessful) {
+                    Result.Error(resp.code(), resp.errorBody()?.string())
+                } else {
+                    Result.Success(Unit)
                 }
-                .onFailure { t ->
-                    result.postValue(Result.Exception(t as Exception))
-                }
+            }.onSuccess {
+                result.postValue(it)
+            }.onFailure {
+                result.postValue(Result.Exception(it as Exception))
+            }
         }
         return result
     }
-}
+    }

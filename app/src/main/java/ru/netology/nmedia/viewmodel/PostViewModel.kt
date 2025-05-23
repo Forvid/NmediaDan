@@ -23,7 +23,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun loadAll() {
-        // получаем LiveData<Result<List<Post>>> от репозитория
         val source: LiveData<Result<List<Post>>> = repository.getAll()
         _data.addSource(source) { result ->
             when (result) {
@@ -36,12 +35,21 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun likeById(id: Long) {
-        val source: LiveData<Result<Post>> = repository.likeById(id)
+        val old = _data.value.orEmpty()
+        val updated = old.map {
+            if (it.id == id) it.copy(likedByMe = !it.likedByMe,
+                likes = if (it.likedByMe) it.likes - 1 else it.likes + 1) else it
+        }
+        _data.value = updated
+
+        val source = repository.likeById(id)
         _data.addSource(source) { result ->
             when (result) {
-                is Result.Success<Post>   -> loadAll()
-                is Result.Error           -> _error.value = result
-                is Result.Exception       -> _error.value = Result.Error(-1, result.exception.message)
+                is Result.Success<Post> -> loadAll()
+                is Result.Error, is Result.Exception -> {
+                    _error.value = result as? Result.Error ?: Result.Error(-1, (result as Result.Exception).exception.message)
+                    _data.value = old // откат
+                }
             }
             _data.removeSource(source)
         }
@@ -60,12 +68,18 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun removeById(id: Long) {
-        val source: LiveData<Result<Unit>> = repository.removeById(id)
+        val old = _data.value.orEmpty()
+        val updated = old.filter { it.id != id }
+        _data.value = updated
+
+        val source = repository.removeById(id)
         _data.addSource(source) { result ->
             when (result) {
-                is Result.Success<Unit>   -> loadAll()
-                is Result.Error           -> _error.value = result
-                is Result.Exception       -> _error.value = Result.Error(-1, result.exception.message)
+                is Result.Success<Unit> -> loadAll()
+                is Result.Error, is Result.Exception -> {
+                    _error.value = result as? Result.Error ?: Result.Error(-1, (result as Result.Exception).exception.message)
+                    _data.value = old // откат
+                }
             }
             _data.removeSource(source)
         }
