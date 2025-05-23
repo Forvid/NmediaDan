@@ -85,7 +85,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    // --- Методы для UI-редактирования ---
 
     fun edit(post: Post) {
         _edited.value = post
