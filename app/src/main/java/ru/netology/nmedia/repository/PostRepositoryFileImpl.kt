@@ -1,102 +1,52 @@
 package ru.netology.nmedia.repository
 
+import android.content.Context
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import kotlinx.coroutines.*
+import androidx.lifecycle.map
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import ru.netology.nmedia.api.ApiModule
+import ru.netology.nmedia.data.room.AppDb
+import ru.netology.nmedia.data.room.toEntity
 import ru.netology.nmedia.dto.Post
-import ru.netology.nmedia.util.Result
 
-class PostRepositoryRetrofitImpl : PostRepository {
+class PostRepositoryImpl(context: Context) : PostRepository {
+    private val dao = AppDb.getInstance(context).postDao()
     private val api = ApiModule.postsApi
-    private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    override fun getAll(): LiveData<Result<List<Post>>> {
-        val result = MutableLiveData<Result<List<Post>>>()
-        ioScope.launch {
-            runCatching { api.getAll() }
-                .onSuccess { resp ->
-                    if (resp.isSuccessful) {
-                        result.postValue(Result.Success(resp.body()!!))
-                    } else {
-                        result.postValue(Result.Error(resp.code(), resp.errorBody()?.string()))
-                    }
-                }
-                .onFailure { ex ->
-                    result.postValue(Result.Exception(ex as Exception))
-                }
+    override fun getAll(): LiveData<List<Post>> =
+        // читаем сразу из БД; toDto берётся из PostEntity.kt
+        dao.getAll().map { list -> list.map { it.toDto() } }
+
+    override suspend fun likeById(id: Long) = withContext(Dispatchers.IO) {
+        val before = dao.getById(id)
+        val toggled = before.copy(
+            likedByMe = !before.likedByMe,
+            likes = before.likes + if (before.likedByMe) -1 else 1
+        )
+        dao.insert(toggled) // локально
+        val resp = if (before.likedByMe) api.unlike(id) else api.like(id)
+        if (!resp.isSuccessful) {
+            dao.insert(before) // откат
+            throw RuntimeException("Ошибка лайка: ${resp.code()}")
         }
-        return result
     }
 
-    override fun save(post: Post): LiveData<Result<Post>> {
-        val result = MutableLiveData<Result<Post>>()
-        ioScope.launch {
-            runCatching {
-                if (post.id == 0L) api.create(post)
-                else              api.create(post.copy(id = post.id)) // всегда POST
-            }
-                .onSuccess { resp ->
-                    if (resp.isSuccessful) {
-                        result.postValue(Result.Success(resp.body()!!))
-                    } else {
-                        result.postValue(Result.Error(resp.code(), resp.errorBody()?.string()))
-                    }
-                }
-                .onFailure { t ->
-                    result.postValue(Result.Exception(t as Exception))
-                }
+    override suspend fun removeById(id: Long) = withContext(Dispatchers.IO) {
+        val before = dao.getById(id)
+        dao.removeById(id)
+        val resp = api.delete(id)
+        if (!resp.isSuccessful) {
+            dao.insert(before) // откат
+            throw RuntimeException("Ошибка удаления: ${resp.code()}")
         }
-        return result
     }
 
-    override fun update(post: Post): LiveData<Result<Post>> = save(post)
-
-    override fun likeById(postId: Long): LiveData<Result<Post>> {
-        val result = MutableLiveData<Result<Post>>()
-        ioScope.launch {
-            runCatching {
-                val resp = api.like(postId)
-                if (!resp.isSuccessful) {
-                    Result.Error(resp.code(), resp.errorBody()?.string())
-                } else {
-                    Result.Success(resp.body()!!)
-                }
-            }.onSuccess {
-                result.postValue(it)
-            }.onFailure {
-                result.postValue(Result.Exception(it as Exception))
-            }
+    override suspend fun save(post: Post) = withContext(Dispatchers.IO) {
+        dao.insert(post.toEntity()) // локально
+        val resp = if (post.id == 0L) api.create(post) else api.update(post.id, post)
+        if (!resp.isSuccessful) {
+            throw RuntimeException("Ошибка сохранения: ${resp.code()}")
         }
-        return result
     }
-
-    override fun shareById(postId: Long): LiveData<Result<Post>> {
-        // сервер не обрабатывает shares, имитируем локально + POST
-        val dummy = MutableLiveData<Result<Post>>()
-        ioScope.launch {
-            // здесь просто возвращаем ошибку по умолчанию или успех без тела
-            dummy.postValue(Result.Error(501, "Не поддерживается"))
-        }
-        return dummy
-    }
-
-    override fun removeById(postId: Long): LiveData<Result<Unit>> {
-        val result = MutableLiveData<Result<Unit>>()
-        ioScope.launch {
-            runCatching {
-                val resp = api.delete(postId)
-                if (!resp.isSuccessful) {
-                    Result.Error(resp.code(), resp.errorBody()?.string())
-                } else {
-                    Result.Success(Unit)
-                }
-            }.onSuccess {
-                result.postValue(it)
-            }.onFailure {
-                result.postValue(Result.Exception(it as Exception))
-            }
-        }
-        return result
-    }
-    }
+}

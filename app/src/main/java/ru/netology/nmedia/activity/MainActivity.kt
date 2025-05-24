@@ -16,19 +16,10 @@ import ru.netology.nmedia.viewmodel.PostViewModel
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-
-    private val viewModel: PostViewModel by viewModels {
-        PostViewModel.provideFactory(application)
-    }
-
-    private var lastAction: (() -> Unit)? = null
-
+    private val viewModel: PostViewModel by viewModels()
     private val newPostLauncher = registerForActivityResult(NewPostResultContract()) { result ->
-        if (result == null) {
-            viewModel.cancelEditing()
-        } else {
-            viewModel.changeContentAndSave(result)
-        }
+        if (result == null) viewModel.cancelEditing()
+        else                viewModel.changeContentAndSave(result)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,65 +29,42 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val adapter = PostAdapter(object : OnInteractionListener {
-            override fun onLike(post: Post) {
-                lastAction = { viewModel.likeById(post.id) }
-                viewModel.likeById(post.id)
-            }
-
-            override fun onRemove(post: Post) {
-                lastAction = { viewModel.removeById(post.id) }
-                viewModel.removeById(post.id)
-            }
-
-            override fun onShare(post: Post) = sharePost(post.content)
-
-            override fun onVideoOpen(url: String) = openVideo(url)
-
-            override fun onEdit(post: Post) = viewModel.edit(post)
+            override fun onLike(post: Post)     = viewModel.likeById(post.id)
+            override fun onRemove(post: Post)   = viewModel.removeById(post.id)
+            override fun onShare(post: Post)    = sharePost(post.content)
+            override fun onVideoOpen(url: String)= openVideo(url)
+            override fun onEdit(post: Post)     = viewModel.edit(post)
         })
-
         binding.recyclerView.adapter = adapter
 
-        viewModel.data.observe(this) { list ->
-            adapter.submitList(list)
+        viewModel.data.observe(this) { adapter.submitList(it) }
+
+        viewModel.error.observe(this) { msg ->
+            msg?.let {
+                Snackbar.make(binding.root, it, Snackbar.LENGTH_INDEFINITE)
+                    .setAction(R.string.retry) {
+                        viewModel.loadAll()
+                    }
+                    .show()
+            }
         }
 
         viewModel.edited.observe(this) { post ->
-            post?.let {
-                newPostLauncher.launch(it.content)
-            }
-        }
-
-        viewModel.error.observe(this) { err ->
-            Snackbar.make(
-                binding.root,
-                "Ошибка ${err.code}: ${err.errorBody ?: "нет тела"}",
-                Snackbar.LENGTH_INDEFINITE
-            )
-                .setAction("Повторить") {
-                    lastAction?.invoke() ?: viewModel.loadAll()
-                }
-                .show()
+            post?.let { newPostLauncher.launch(it.content) }
         }
 
         binding.fab.setOnClickListener {
             viewModel.createNewPost()
         }
-
-        // Первая загрузка — сохранить как последнее действие
-        lastAction = { viewModel.loadAll() }
-        viewModel.loadAll()
     }
 
     private fun sharePost(content: String) {
-        startActivity(
-            Intent.createChooser(
-                Intent(Intent.ACTION_SEND)
-                    .putExtra(Intent.EXTRA_TEXT, content)
-                    .setType("text/plain"),
-                getString(R.string.chooser_share_post)
-            )
-        )
+        startActivity(Intent.createChooser(
+            Intent(Intent.ACTION_SEND)
+                .putExtra(Intent.EXTRA_TEXT, content)
+                .setType("text/plain"),
+            getString(R.string.chooser_share_post)
+        ))
     }
 
     private fun openVideo(url: String) {
