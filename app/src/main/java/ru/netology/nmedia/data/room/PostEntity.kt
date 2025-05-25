@@ -16,21 +16,19 @@ data class PostEntity(
     val views: Int,
     val video: String?
 ) {
-
     fun toDto(): Post =
         Post(
-            id        = id,
-            author    = author,
-            content   = content,
+            id = id,
+            author = author,
+            content = content,
             published = published,
-            likes     = likes,
-            shares    = shares,
-            views     = views,
             likedByMe = likedByMe,
-            video     = video
+            likes = likes,
+            shares = shares,
+            views = views,
+            video = video
         )
 }
-
 
 fun Post.toEntity(): PostEntity =
     PostEntity(

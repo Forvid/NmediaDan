@@ -9,15 +9,14 @@ interface PostDao {
     fun getAll(): LiveData<List<PostEntity>>
 
     @Query("SELECT * FROM posts WHERE id = :id")
-    suspend fun getById(id: Long): PostEntity
+    fun getById(id: Long): PostEntity
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(post: PostEntity)
+    fun insert(post: PostEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(posts: List<PostEntity>)
+    fun insertAll(posts: List<PostEntity>)
 
     @Query("DELETE FROM posts WHERE id = :id")
-    suspend fun removeById(id: Long)
+    fun removeById(id: Long): Int
 }
-
