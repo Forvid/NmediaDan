@@ -29,7 +29,7 @@ class PostRepositoryImpl(
         }
         resp.body()
             ?.map(Post::toEntity)
-            ?.let { dao.insert(it) } // именно insert(List<PostEntity>)
+            ?.let { dao.insertAll(it) } // именно insert(List<PostEntity>)
     }
 
     /** Локальный отклик + HTTP-запрос, при ошибке откат */
