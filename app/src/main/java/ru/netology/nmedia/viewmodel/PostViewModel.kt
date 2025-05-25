@@ -9,18 +9,19 @@ import ru.netology.nmedia.repository.PostRepositoryImpl
 class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = PostRepositoryImpl(application)
 
-    /** Лента из БД */
+    /** Локальная лента из БД */
     val data: LiveData<List<Post>> = repository.getAll()
 
-    /** Текст ошибки для Snackbar */
+    /** Сообщение об ошибке, показывается в Snackbar */
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
-    /** Редактирование */
+    /** Пост, который сейчас редактируется */
     private val _edited = MutableLiveData<Post?>()
     val edited: LiveData<Post?> = _edited
 
     init {
+        // При запуске сходу подтягиваем с сервера
         viewModelScope.launch {
             try {
                 repository.fetchFromServer()
@@ -30,7 +31,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    /** Позволяет вручную повторить fetch из UI */
+    /** Позволяет повторить сетевой fetch по кнопке Retry */
     fun refresh() {
         viewModelScope.launch {
             try {
@@ -41,6 +42,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Локальный отклик + отправка на сервер с возможным откатом */
     fun likeById(id: Long) {
         viewModelScope.launch {
             try {
@@ -51,6 +53,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Локальный отклик + удаление на сервере с возможным откатом */
     fun removeById(id: Long) {
         viewModelScope.launch {
             try {
@@ -61,6 +64,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Сохранение нового или обновление существующего поста */
     fun save(post: Post) {
         viewModelScope.launch {
             try {
@@ -71,13 +75,38 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Начать редактирование поста */
     fun edit(post: Post)        = _edited.postValue(post)
-    fun createNewPost()         = _edited.postValue(Post(0, "Me", "", "", 0, 0, 0, false, null))
+    /** Создать новый пустой пост */
+    fun createNewPost()         = _edited.postValue(Post(
+        id        = 0,
+        author    = "Me",
+        content   = "",
+        published = "",
+        likedByMe = false,
+        likes     = 0,
+        shares    = 0,
+        views     = 0,
+        video     = null
+    ))
+    /** Завершить ввод и сохранить */
     fun changeContentAndSave(content: String) {
         val post = _edited.value ?: return
         val trimmed = content.trim()
-        if (post.content != trimmed) save(post.copy(content = trimmed))
+        if (post.content != trimmed) {
+            save(post.copy(content = trimmed))
+        }
         _edited.value = null
     }
+    /** Отменить редактирование */
     fun cancelEditing()         = _edited.postValue(null)
+
+    companion object {
+        fun provideFactory(app: Application): ViewModelProvider.Factory =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T =
+                    PostViewModel(app) as T
+            }
+    }
 }
