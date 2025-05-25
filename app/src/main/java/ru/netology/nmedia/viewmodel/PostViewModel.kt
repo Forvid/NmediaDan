@@ -9,26 +9,32 @@ import ru.netology.nmedia.repository.PostRepositoryImpl
 class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = PostRepositoryImpl(application)
 
-    // Лайва без сетевых ошибок — зеркалим БД
+    /** Лента из БД */
     val data: LiveData<List<Post>> = repository.getAll()
 
-    // Ошибка как строка для Snackbar
+    /** Текст ошибки для Snackbar */
     private val _error = MutableLiveData<String?>()
     val error: LiveData<String?> = _error
 
-    // Для открытия редактора
+    /** Редактирование */
     private val _edited = MutableLiveData<Post?>()
     val edited: LiveData<Post?> = _edited
 
     init {
-        loadAll()
-    }
-
-    fun loadAll() {
         viewModelScope.launch {
             try {
-                repository.getAll().value // триггер, но фактически мы делаем save каждого поста:
-                repository.getAll().value?.forEach { repository.save(it) }
+                repository.fetchFromServer()
+            } catch (e: Exception) {
+                _error.value = e.message
+            }
+        }
+    }
+
+    /** Позволяет вручную повторить fetch из UI */
+    fun refresh() {
+        viewModelScope.launch {
+            try {
+                repository.fetchFromServer()
             } catch (e: Exception) {
                 _error.value = e.message
             }
@@ -65,24 +71,13 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun edit(post: Post) {
-        _edited.value = post
-    }
-
-    fun createNewPost() {
-        _edited.value = Post(id = 0L, author = "Me", content = "", published = "")
-    }
-
+    fun edit(post: Post)        = _edited.postValue(post)
+    fun createNewPost()         = _edited.postValue(Post(0, "Me", "", "", 0, 0, 0, false, null))
     fun changeContentAndSave(content: String) {
         val post = _edited.value ?: return
         val trimmed = content.trim()
-        if (post.content != trimmed) {
-            save(post.copy(content = trimmed))
-        }
+        if (post.content != trimmed) save(post.copy(content = trimmed))
         _edited.value = null
     }
-
-    fun cancelEditing() {
-        _edited.value = null
-    }
+    fun cancelEditing()         = _edited.postValue(null)
 }

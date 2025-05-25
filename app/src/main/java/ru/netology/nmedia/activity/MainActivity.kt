@@ -6,7 +6,9 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
 import ru.netology.nmedia.R
 import ru.netology.nmedia.adapter.OnInteractionListener
 import ru.netology.nmedia.adapter.PostAdapter
@@ -17,6 +19,7 @@ import ru.netology.nmedia.viewmodel.PostViewModel
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: PostViewModel by viewModels()
+
     private val newPostLauncher = registerForActivityResult(NewPostResultContract()) { result ->
         if (result == null) viewModel.cancelEditing()
         else                viewModel.changeContentAndSave(result)
@@ -43,7 +46,8 @@ class MainActivity : AppCompatActivity() {
             msg?.let {
                 Snackbar.make(binding.root, it, Snackbar.LENGTH_INDEFINITE)
                     .setAction(R.string.retry) {
-                        viewModel.loadAll()
+                        // повторяем fetch из ViewModel
+                        viewModel.refresh()
                     }
                     .show()
             }
@@ -53,9 +57,7 @@ class MainActivity : AppCompatActivity() {
             post?.let { newPostLauncher.launch(it.content) }
         }
 
-        binding.fab.setOnClickListener {
-            viewModel.createNewPost()
-        }
+        binding.fab.setOnClickListener { viewModel.createNewPost() }
     }
 
     private fun sharePost(content: String) {
