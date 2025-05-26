@@ -15,19 +15,19 @@ interface PostDao {
     suspend fun insertAll(posts: List<PostEntity>): List<Long>
 
     @Query("UPDATE posts SET isNew = 0 WHERE isNew = 1")
-    suspend fun markAllRead(): Int
+    fun markAllRead(): Int
 
     @Query("DELETE FROM posts WHERE id = :id")
-    suspend fun removeById(id: Long): Int
+    fun removeById(id: Long): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun save(post: PostEntity): Long
+    fun save(post: PostEntity): Long
 
     @Query("""
-        UPDATE posts
-        SET likedByMe = CASE WHEN likedByMe THEN 0 ELSE 1 END,
-            likes = likes + CASE WHEN likedByMe THEN -1 ELSE 1 END
-        WHERE id = :id
-    """)
-    suspend fun likeById(id: Long): Int
+    UPDATE posts
+    SET likedByMe = CASE WHEN likedByMe THEN 0 ELSE 1 END,
+        likes = likes + CASE WHEN likedByMe THEN -1 ELSE 1 END
+    WHERE id = :id
+  """)
+    fun likeById(id: Long): Int
 }
