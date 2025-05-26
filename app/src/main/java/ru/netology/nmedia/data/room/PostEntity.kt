@@ -14,23 +14,24 @@ data class PostEntity(
     val likes: Int,
     val shares: Int,
     val views: Int,
-    val video: String?
+    val video: String?,
+    val isNew: Boolean = false       // <— новый флаг
 ) {
     fun toDto(): Post =
         Post(
-            id = id,
-            author = author,
-            content = content,
+            id        = id,
+            author    = author,
+            content   = content,
             published = published,
             likedByMe = likedByMe,
-            likes = likes,
-            shares = shares,
-            views = views,
-            video = video
+            likes     = likes,
+            shares    = shares,
+            views     = views,
+            video     = video
         )
 }
 
-fun Post.toEntity(): PostEntity =
+fun Post.toEntity(isNew: Boolean = false): PostEntity =
     PostEntity(
         id        = id,
         author    = author,
@@ -40,5 +41,6 @@ fun Post.toEntity(): PostEntity =
         likes     = likes,
         shares    = shares,
         views     = views,
-        video     = video
+        video     = video,
+        isNew     = isNew
     )

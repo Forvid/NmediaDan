@@ -1,22 +1,19 @@
 package ru.netology.nmedia.data.room
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PostDao {
     @Query("SELECT * FROM posts ORDER BY id DESC")
-    fun getAll(): LiveData<List<PostEntity>>
+    fun getAllFlow(): Flow<List<PostEntity>>
 
-    @Query("SELECT * FROM posts WHERE id = :id")
-    fun getById(id: Long): PostEntity
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(post: PostEntity)
+    @Query("SELECT COUNT(*) FROM posts WHERE isNew = 1")
+    fun newPostsCount(): Flow<Int>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertAll(posts: List<PostEntity>)
+    suspend fun insertAll(posts: List<PostEntity>)
 
-    @Query("DELETE FROM posts WHERE id = :id")
-    fun removeById(id: Long): Int
+    @Query("UPDATE posts SET isNew = 0 WHERE isNew = 1")
+    suspend fun markAllRead()
 }
