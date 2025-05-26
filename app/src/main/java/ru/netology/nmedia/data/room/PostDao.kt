@@ -23,11 +23,14 @@ interface PostDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun save(post: PostEntity): Long
 
-    @Query("""
+    @Query(
+        """
         UPDATE posts
-        SET likedByMe = CASE WHEN likedByMe THEN 0 ELSE 1 END,
-            likes = likes + CASE WHEN likedByMe THEN -1 ELSE 1 END
+        SET
+          likedByMe = CASE WHEN likedByMe THEN 0 ELSE 1 END,
+          likes     = likes + CASE WHEN likedByMe THEN -1 ELSE 1 END
         WHERE id = :id
-    """)
+        """
+    )
     suspend fun likeById(id: Long): Int
 }
