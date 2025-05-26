@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PostDao {
-    @Query("SELECT * FROM posts ORDER BY id DESC")
+    @Query("SELECT * FROM posts WHERE isNew = 0 ORDER BY id DESC")
     fun getAllFlow(): Flow<List<PostEntity>>
 
     @Query("SELECT COUNT(*) FROM posts WHERE isNew = 1")

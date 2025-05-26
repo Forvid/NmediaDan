@@ -15,7 +15,7 @@ data class PostEntity(
     val shares: Int,
     val views: Int,
     val video: String?,
-    val isNew: Boolean = false       // <— новый флаг
+    val isNew: Boolean = false       // <-- новый флаг, по умолчанию false
 ) {
     fun toDto(): Post =
         Post(
