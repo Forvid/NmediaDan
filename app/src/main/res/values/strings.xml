@@ -20,6 +20,7 @@
     <string name="add_post">Add post</string>
     <string name="hint_post_content">Enter post text...</string>
     <string name="retry">Retry</string>
+    <string name="new_posts_count">New entries: %1$d</string>
 
 
 </resources>

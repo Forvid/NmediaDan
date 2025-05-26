@@ -12,8 +12,8 @@ interface PostDao {
     fun newPostsCount(): Flow<Int>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(posts: List<PostEntity>)
+    suspend fun insertAll(posts: List<PostEntity>): List<Long>
 
     @Query("UPDATE posts SET isNew = 0 WHERE isNew = 1")
-    suspend fun markAllRead()
+    suspend fun markAllRead(): Int
 }

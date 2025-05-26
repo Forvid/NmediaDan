@@ -54,9 +54,11 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.adapter = adapter
 
         // 1) поток данных
-        vm.data.observe(this) { adapter.submitList(it) }
+        vm.data.observe(this) { posts ->
+            adapter.submitList(posts)
+        }
 
-        // 2) баннер новых
+        // 2) баннер новых постов
         vm.newCount.observe(this) { count ->
             binding.bannerNew.visibility = if (count > 0) VISIBLE else GONE
             binding.textNew.text = getString(R.string.new_posts_count, count)
@@ -81,7 +83,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         // 5) FAB
-        binding.fab.setOnClickListener { vm.createNewPost() }
+        binding.fab.setOnClickListener {
+            vm.createNewPost()
+        }
     }
 
     private fun sharePost(content: String) {

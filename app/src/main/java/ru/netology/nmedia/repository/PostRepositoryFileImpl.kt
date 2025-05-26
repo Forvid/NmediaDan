@@ -19,30 +19,37 @@ class PostRepositoryImpl(context: Context) : PostRepository {
 
     override fun getAll(): LiveData<List<Post>> =
         dao.getAllFlow()
-            .map { list -> list.map { it.toDto() } }
+            .map { list -> list.map(PostEntity::toDto) }
             .asLiveData()
 
     override fun newPostsCount(): LiveData<Int> =
         dao.newPostsCount().asLiveData()
 
-    override suspend fun fetchFromServer() = withContext(Dispatchers.IO) {
-        val maxId = dao.getAllFlow().map { it.maxOfOrNull(PostEntity::id) ?: 0L }.first()
+    override suspend fun fetchFromServer(): Unit = withContext(Dispatchers.IO) {
+        val maxId = dao.getAllFlow()
+            .map { it.maxOfOrNull(PostEntity::id) ?: 0L }
+            .first()
+
         val resp = api.getNewer(maxId)
         if (!resp.isSuccessful) throw RuntimeException("Ошибка сети: ${resp.code()}")
+
         val posts = resp.body().orEmpty()
         dao.insertAll(posts.map { it.toEntity(isNew = true) })
+
+        return@withContext
     }
 
-    override suspend fun markAllRead() = withContext(Dispatchers.IO) {
+    override suspend fun markAllRead(): Unit = withContext(Dispatchers.IO) {
         dao.markAllRead()
+        return@withContext
     }
 
-    override suspend fun likeById(id: Long) = withContext(Dispatchers.IO) {
+    override suspend fun likeById(id: Long): Unit = withContext(Dispatchers.IO) {
     }
 
-    override suspend fun removeById(id: Long) = withContext(Dispatchers.IO) {
+    override suspend fun removeById(id: Long): Unit = withContext(Dispatchers.IO) {
     }
 
-    override suspend fun save(post: Post) = withContext(Dispatchers.IO) {
+    override suspend fun save(post: Post): Unit = withContext(Dispatchers.IO) {
     }
 }
