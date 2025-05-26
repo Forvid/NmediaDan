@@ -20,5 +20,6 @@
     <string name="add_post">Добавить пост</string>
     <string name="hint_post_content">Введите текст поста...</string>
     <string name="retry">Повторить</string>
+    <string name="new_posts_count">Новые записи: %1$d</string>
 
 </resources>
