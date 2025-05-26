@@ -12,8 +12,23 @@ interface PostDao {
     fun newPostsCount(): Flow<Int>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(posts: List<PostEntity>): List<Long>
+    suspend fun insertAll(posts: List<PostEntity>) // возвращает Unit
 
     @Query("UPDATE posts SET isNew = 0 WHERE isNew = 1")
-    suspend fun markAllRead(): Int
+    suspend fun markAllRead(): Unit  // возвращает Unit
+
+    @Query("DELETE FROM posts WHERE id = :id")
+    suspend fun removeById(id: Long): Unit
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun save(post: PostEntity): Unit
+
+    @Query("""
+        UPDATE posts
+        SET likedByMe = CASE WHEN likedByMe THEN 0 ELSE 1 END,
+            likes = likes + CASE WHEN likedByMe THEN -1 ELSE 1 END
+        WHERE id = :id
+    """)
+    suspend fun likeById(id: Long): Unit
 }
+

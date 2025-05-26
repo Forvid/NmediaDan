@@ -45,11 +45,34 @@ class PostRepositoryImpl(context: Context) : PostRepository {
     }
 
     override suspend fun likeById(id: Long): Unit = withContext(Dispatchers.IO) {
+        // 1) локально отклик
+        dao.likeById(id)
+        // 2) на сервере
+        val resp = api.like(id)
+        if (!resp.isSuccessful) {
+            dao.likeById(id)
+            throw RuntimeException("Ошибка лайка: ${resp.code()}")
+        }
     }
 
     override suspend fun removeById(id: Long): Unit = withContext(Dispatchers.IO) {
+        // 1) локально
+        dao.removeById(id)
+        // 2) на сервере
+        val resp = api.delete(id)
+        if (!resp.isSuccessful) {
+            throw RuntimeException("Ошибка удаления: ${resp.code()}")
+        }
     }
 
     override suspend fun save(post: Post): Unit = withContext(Dispatchers.IO) {
+        // 1) локально
+        dao.save(post.toEntity(isNew = false))
+        // 2) на сервере
+        val resp = if (post.id == 0L) api.create(post) else api.update(post.id, post)
+        if (!resp.isSuccessful) {
+            throw RuntimeException("Ошибка сохранения: ${resp.code()}")
+        }
     }
+
 }
