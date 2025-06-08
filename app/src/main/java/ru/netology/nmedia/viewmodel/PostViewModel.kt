@@ -1,49 +1,46 @@
 package ru.netology.nmedia.viewmodel
 
-import android.app.Application
 import androidx.lifecycle.*
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import ru.netology.nmedia.dto.Post
-import ru.netology.nmedia.repository.PostRepositoryImpl
+import ru.netology.nmedia.repository.PostRepository
+import javax.inject.Inject
 
-class PostViewModel(application: Application) : AndroidViewModel(application) {
-    private val repo = PostRepositoryImpl(application)
+@HiltViewModel
+class PostViewModel @Inject constructor(
+    private val repository: PostRepository
+) : ViewModel() {
 
-    val data     = repo.getAll()
-    val newCount = repo.newPostsCount()
+    val data: LiveData<List<Post>> = repository.getAll()
+    val newCount: LiveData<Int> = repository.newPostsCount()
 
     private val _error = MutableLiveData<String?>()
-    val error     = _error
+    val error: LiveData<String?> = _error
 
     private val _edited = MutableLiveData<Post?>()
-    val edited    = _edited
+    val edited: LiveData<Post?> = _edited
 
     init {
         // при старте подгружаем новые
-        viewModelScope.launch {
-            try {
-                repo.fetchFromServer()
-            } catch (e: Exception) {
-                _error.value = e.message
-            }
-        }
+        refresh()
     }
 
     fun refresh() = viewModelScope.launch {
         try {
-            repo.fetchFromServer()
+            repository.fetchFromServer()
         } catch (e: Exception) {
             _error.value = e.message
         }
     }
 
     fun markAllRead() = viewModelScope.launch {
-        repo.markAllRead()
+        repository.markAllRead()
     }
 
     fun likeById(id: Long) = viewModelScope.launch {
         try {
-            repo.likeById(id)
+            repository.likeById(id)
         } catch (e: Exception) {
             _error.value = e.message
         }
@@ -51,7 +48,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun removeById(id: Long) = viewModelScope.launch {
         try {
-            repo.removeById(id)
+            repository.removeById(id)
         } catch (e: Exception) {
             _error.value = e.message
         }
@@ -59,7 +56,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun save(post: Post) = viewModelScope.launch {
         try {
-            repo.save(post)
+            repository.save(post)
         } catch (e: Exception) {
             _error.value = e.message
         }
@@ -78,13 +75,4 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun cancelEditing() = _edited.postValue(null)
-
-    companion object {
-        fun provideFactory(app: Application): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    PostViewModel(app) as T
-            }
-    }
 }

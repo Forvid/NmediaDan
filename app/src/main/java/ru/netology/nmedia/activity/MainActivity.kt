@@ -10,20 +10,27 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 import ru.netology.nmedia.R
 import ru.netology.nmedia.adapter.OnInteractionListener
 import ru.netology.nmedia.adapter.PostAdapter
 import ru.netology.nmedia.databinding.ActivityMainBinding
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.viewmodel.PostViewModel
+import javax.inject.Inject
+import com.google.firebase.messaging.FirebaseMessaging
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private val vm: PostViewModel by viewModels { PostViewModel.provideFactory(application) }
+    private val vm: PostViewModel by viewModels()
+
+    @Inject
+    lateinit var firebase: FirebaseMessaging
 
     private val newPostLauncher = registerForActivityResult(NewPostResultContract()) { result ->
         if (result == null) vm.cancelEditing()
-        else                vm.changeContentAndSave(result)
+        else vm.changeContentAndSave(result)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,6 +38,11 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // пример DI для FirebaseMessaging
+        firebase.token.addOnCompleteListener { task ->
+            println("FCM Token: ${task.result}")
+        }
 
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun onLike(post: Post) {
@@ -53,22 +65,18 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
 
-        // 1) поток данных
-        vm.data.observe(this) { posts ->
-            adapter.submitList(posts)
-        }
+        vm.data.observe(this) { adapter.submitList(it) }
 
-        // 2) баннер новых постов
         vm.newCount.observe(this) { count ->
             binding.bannerNew.visibility = if (count > 0) VISIBLE else GONE
             binding.textNew.text = getString(R.string.new_posts_count, count)
         }
+
         binding.bannerNew.setOnClickListener {
             vm.markAllRead()
             binding.recyclerView.smoothScrollToPosition(0)
         }
 
-        // 3) ошибки
         vm.error.observe(this) { msg ->
             msg?.let {
                 Snackbar.make(binding.root, it, Snackbar.LENGTH_INDEFINITE)
@@ -77,26 +85,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // 4) редактирование
         vm.edited.observe(this) { post ->
             post?.let { newPostLauncher.launch(it.content) }
         }
 
-        // 5) FAB
-        binding.fab.setOnClickListener {
-            vm.createNewPost()
-        }
+        binding.fab.setOnClickListener { vm.createNewPost() }
     }
 
     private fun sharePost(content: String) {
-        startActivity(
-            Intent.createChooser(
-                Intent(Intent.ACTION_SEND)
-                    .putExtra(Intent.EXTRA_TEXT, content)
-                    .setType("text/plain"),
-                getString(R.string.chooser_share_post)
-            )
-        )
+        startActivity(Intent.createChooser(
+            Intent(Intent.ACTION_SEND)
+                .putExtra(Intent.EXTRA_TEXT, content)
+                .setType("text/plain"),
+            getString(R.string.chooser_share_post)
+        ))
     }
 
     private fun openVideo(url: String) {
