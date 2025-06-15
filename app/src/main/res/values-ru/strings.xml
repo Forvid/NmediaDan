@@ -21,5 +21,10 @@
     <string name="hint_post_content">Введите текст поста...</string>
     <string name="retry">Повторить</string>
     <string name="new_posts_count">Новые записи: %1$d</string>
+    <string name="login_hint">Логин</string>
+    <string name="pass_hint">Пароль</string>
+    <string name="login">Войти</string>
+    <string name="logout">Выйти</string>
+
 
 </resources>

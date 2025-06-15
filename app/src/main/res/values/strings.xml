@@ -21,6 +21,10 @@
     <string name="hint_post_content">Enter post text...</string>
     <string name="retry">Retry</string>
     <string name="new_posts_count">New entries: %1$d</string>
+    <string name="login_hint">Login</string>
+    <string name="pass_hint">Password</string>
+    <string name="login">log in</string>
+    <string name="logout">log out</string>
 
 
 </resources>
