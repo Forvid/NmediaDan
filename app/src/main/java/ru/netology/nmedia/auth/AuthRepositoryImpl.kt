@@ -4,12 +4,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AuthRepositoryImpl @Inject constructor(): AuthRepository {
-
+class AuthRepositoryImpl @Inject constructor() : AuthRepository {
     private var loggedIn = false
 
     override suspend fun login(user: String, pass: String): Boolean {
-
         loggedIn = user.isNotBlank() && pass.isNotBlank()
         return loggedIn
     }
@@ -18,5 +16,5 @@ class AuthRepositoryImpl @Inject constructor(): AuthRepository {
         loggedIn = false
     }
 
-    override fun isLoggedIn() = loggedIn
+    override fun isLoggedIn(): Boolean = loggedIn
 }

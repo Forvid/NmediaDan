@@ -10,35 +10,28 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
 import ru.netology.nmedia.R
+import ru.netology.nmedia.activity.AuthActivity
 import ru.netology.nmedia.adapter.OnInteractionListener
 import ru.netology.nmedia.adapter.PostAdapter
-import ru.netology.nmedia.activity.AuthActivity
-import ru.netology.nmedia.auth.AuthViewModel
 import ru.netology.nmedia.databinding.ActivityMainBinding
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.auth.AuthViewModel
 import ru.netology.nmedia.viewmodel.PostViewModel
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-
     private lateinit var binding: ActivityMainBinding
 
-    // ViewModel для постов
-    private val vm: PostViewModel by viewModels()
-    // ViewModel для авторизации (если используется)
-    private val authVm: AuthViewModel by viewModels()
+    private val postViewModel: PostViewModel by viewModels()
+    private val authViewModel: AuthViewModel by viewModels()
 
-
-    @Inject lateinit var firebase: FirebaseMessaging
-
-    private val newPostLauncher = registerForActivityResult(NewPostResultContract()) { result ->
-        if (result == null) vm.cancelEditing()
-        else vm.changeContentAndSave(result)
-    }
+    private val newPostLauncher =
+        registerForActivityResult(NewPostResultContract()) { result ->
+            if (result == null) postViewModel.cancelEditing()
+            else                postViewModel.changeContentAndSave(result)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,71 +39,77 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        if (!authVm.isLoggedIn()) {
+        if (!authViewModel.isLoggedIn()) {
             startActivity(Intent(this, AuthActivity::class.java))
+            return
         }
 
-        firebase.token.addOnCompleteListener { task ->
-            println("FCM Token: ${task.result}")
-        }
-
+        // адаптер и RecyclerView
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun onLike(post: Post) {
-                vm.likeById(post.id)
+                postViewModel.likeById(post.id)
             }
+
             override fun onRemove(post: Post) {
-                vm.removeById(post.id)
+                postViewModel.removeById(post.id)
             }
+
             override fun onShare(post: Post) {
                 sharePost(post.content)
             }
+
             override fun onVideoOpen(url: String) {
                 openVideo(url)
             }
+
             override fun onEdit(post: Post) {
-                vm.edit(post)
+                postViewModel.edit(post)
             }
         })
 
-        binding.recyclerView.layoutManager = LinearLayoutManager(this)
-        binding.recyclerView.adapter = adapter
-
-        vm.data.observe(this) { posts ->
-            adapter.submitList(posts)
+        binding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            this.adapter = adapter
         }
 
-        vm.newCount.observe(this) { count ->
+        // Подписываемся на данные
+        postViewModel.data.observe(this) { posts ->
+            adapter.submitList(posts)
+        }
+        postViewModel.newCount.observe(this) { count ->
             binding.bannerNew.visibility = if (count > 0) VISIBLE else GONE
             binding.textNew.text = getString(R.string.new_posts_count, count)
         }
         binding.bannerNew.setOnClickListener {
-            vm.markAllRead()
+            postViewModel.markAllRead()
             binding.recyclerView.smoothScrollToPosition(0)
         }
 
         // Ошибки сети
-        vm.error.observe(this) { msg ->
+        postViewModel.error.observe(this) { msg ->
             msg?.let {
                 Snackbar.make(binding.root, it, Snackbar.LENGTH_INDEFINITE)
-                    .setAction(R.string.retry) { vm.refresh() }
+                    .setAction(R.string.retry) { postViewModel.refresh() }
                     .show()
             }
         }
 
-
-        vm.edited.observe(this) { post ->
+        // Редактирование
+        postViewModel.edited.observe(this) { post ->
             post?.let { newPostLauncher.launch(it.content) }
         }
 
+        // FAB — создание нового поста
         binding.fab.setOnClickListener {
-            vm.createNewPost()
+            postViewModel.createNewPost()
         }
 
-        // Кнопка «Выйти»
+        // Кнопка «Выйти»:
         binding.logoutButton.setOnClickListener {
-            authVm.logout()
-            vm.refresh()
+            authViewModel.logout()
+            postViewModel.refresh()
             startActivity(Intent(this, AuthActivity::class.java))
+            finish()
         }
     }
 
