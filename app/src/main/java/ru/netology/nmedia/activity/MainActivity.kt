@@ -97,12 +97,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Редактирование
+
         vm.edited.observe(this) { post ->
             post?.let { newPostLauncher.launch(it.content) }
         }
 
-        // FAB — создание нового
         binding.fab.setOnClickListener {
             vm.createNewPost()
         }
