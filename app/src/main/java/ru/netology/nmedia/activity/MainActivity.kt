@@ -12,26 +12,26 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
 import ru.netology.nmedia.R
+import ru.netology.nmedia.activity.AuthActivity
 import ru.netology.nmedia.adapter.OnInteractionListener
 import ru.netology.nmedia.adapter.PostAdapter
 import ru.netology.nmedia.databinding.ActivityMainBinding
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.auth.AuthViewModel
 import ru.netology.nmedia.viewmodel.PostViewModel
-import javax.inject.Inject
-import com.google.firebase.messaging.FirebaseMessaging
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private val vm: PostViewModel by viewModels()
 
-    @Inject
-    lateinit var firebase: FirebaseMessaging
+    private val postViewModel: PostViewModel by viewModels()
+    private val authViewModel: AuthViewModel by viewModels()
 
-    private val newPostLauncher = registerForActivityResult(NewPostResultContract()) { result ->
-        if (result == null) vm.cancelEditing()
-        else vm.changeContentAndSave(result)
-    }
+    private val newPostLauncher =
+        registerForActivityResult(NewPostResultContract()) { result ->
+            if (result == null) postViewModel.cancelEditing()
+            else                postViewModel.changeContentAndSave(result)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,66 +39,89 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // пример DI для FirebaseMessaging
-        firebase.token.addOnCompleteListener { task ->
-            println("FCM Token: ${task.result}")
+        if (!authViewModel.isLoggedIn()) {
+            startActivity(Intent(this, AuthActivity::class.java))
+            return
         }
 
+        // адаптер и RecyclerView
         val adapter = PostAdapter(object : OnInteractionListener {
             override fun onLike(post: Post) {
-                vm.likeById(post.id)
+                postViewModel.likeById(post.id)
             }
+
             override fun onRemove(post: Post) {
-                vm.removeById(post.id)
+                postViewModel.removeById(post.id)
             }
+
             override fun onShare(post: Post) {
                 sharePost(post.content)
             }
+
             override fun onVideoOpen(url: String) {
                 openVideo(url)
             }
+
             override fun onEdit(post: Post) {
-                vm.edit(post)
+                postViewModel.edit(post)
             }
         })
 
-        binding.recyclerView.layoutManager = LinearLayoutManager(this)
-        binding.recyclerView.adapter = adapter
+        binding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            this.adapter = adapter
+        }
 
-        vm.data.observe(this) { adapter.submitList(it) }
-
-        vm.newCount.observe(this) { count ->
+        // Подписываемся на данные
+        postViewModel.data.observe(this) { posts ->
+            adapter.submitList(posts)
+        }
+        postViewModel.newCount.observe(this) { count ->
             binding.bannerNew.visibility = if (count > 0) VISIBLE else GONE
             binding.textNew.text = getString(R.string.new_posts_count, count)
         }
-
         binding.bannerNew.setOnClickListener {
-            vm.markAllRead()
+            postViewModel.markAllRead()
             binding.recyclerView.smoothScrollToPosition(0)
         }
 
-        vm.error.observe(this) { msg ->
+        // Ошибки сети
+        postViewModel.error.observe(this) { msg ->
             msg?.let {
                 Snackbar.make(binding.root, it, Snackbar.LENGTH_INDEFINITE)
-                    .setAction(R.string.retry) { vm.refresh() }
+                    .setAction(R.string.retry) { postViewModel.refresh() }
                     .show()
             }
         }
 
-        vm.edited.observe(this) { post ->
+        // Редактирование
+        postViewModel.edited.observe(this) { post ->
             post?.let { newPostLauncher.launch(it.content) }
         }
 
-        binding.fab.setOnClickListener { vm.createNewPost() }
+        // FAB — создание нового поста
+        binding.fab.setOnClickListener {
+            postViewModel.createNewPost()
+        }
+
+        // Кнопка «Выйти»:
+        binding.logoutButton.setOnClickListener {
+            authViewModel.logout()
+            postViewModel.refresh()
+            startActivity(Intent(this, AuthActivity::class.java))
+            finish()
+        }
     }
 
     private fun sharePost(content: String) {
-        startActivity(Intent.createChooser(
-            Intent(Intent.ACTION_SEND)
-                .putExtra(Intent.EXTRA_TEXT, content)
-                .setType("text/plain"),
-            getString(R.string.chooser_share_post)
-        ))
+        startActivity(
+            Intent.createChooser(
+                Intent(Intent.ACTION_SEND)
+                    .putExtra(Intent.EXTRA_TEXT, content)
+                    .setType("text/plain"),
+                getString(R.string.chooser_share_post)
+            )
+        )
     }
 
     private fun openVideo(url: String) {
