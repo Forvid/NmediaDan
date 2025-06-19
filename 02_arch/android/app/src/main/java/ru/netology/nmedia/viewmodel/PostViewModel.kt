@@ -3,6 +3,8 @@ package ru.netology.nmedia.viewmodel
 import android.net.Uri
 import androidx.core.net.toFile
 import androidx.lifecycle.*
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
@@ -15,6 +17,7 @@ import ru.netology.nmedia.dto.MediaUpload
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.model.FeedModelState
 import ru.netology.nmedia.model.PhotoModel
+import ru.netology.nmedia.repository.PostPagingSource
 import ru.netology.nmedia.repository.PostRepository
 import ru.netology.nmedia.util.SingleLiveEvent
 import javax.inject.Inject
@@ -36,33 +39,32 @@ private val noPhoto = PhotoModel()
 @HiltViewModel
 class PostViewModel @Inject constructor(
     private val repository: PostRepository,
-    auth: AppAuth,
+    private val auth: AppAuth,
 ) : ViewModel() {
-    private val cached = repository
-        .data
-        .cachedIn(viewModelScope)
 
     val data: Flow<PagingData<Post>> = auth.authStateFlow
-        .flatMapLatest { (myId, _) ->
-            cached.map { pagingData ->
-                pagingData.map { post ->
-                    post.copy(ownedByMe = post.authorId == myId)
-                }
+        .flatMapLatest { authState ->
+            Pager(PagingConfig(pageSize = 10)) {
+                PostPagingSource(repository.service, authState.token)
             }
+                .flow
+                .map { pagingData ->
+                    pagingData.map { post ->
+                        post.copy(ownedByMe = post.authorId == authState.id)
+                    }
+                }
         }
+        .cachedIn(viewModelScope)
 
     private val _dataState = MutableLiveData<FeedModelState>()
-    val dataState: LiveData<FeedModelState>
-        get() = _dataState
+    val dataState: LiveData<FeedModelState> = _dataState
 
     private val edited = MutableLiveData(empty)
     private val _postCreated = SingleLiveEvent<Unit>()
-    val postCreated: LiveData<Unit>
-        get() = _postCreated
+    val postCreated: LiveData<Unit> = _postCreated
 
     private val _photo = MutableLiveData(noPhoto)
-    val photo: LiveData<PhotoModel>
-        get() = _photo
+    val photo: LiveData<PhotoModel> = _photo
 
     init {
         loadPosts()
@@ -71,7 +73,7 @@ class PostViewModel @Inject constructor(
     fun loadPosts() = viewModelScope.launch {
         try {
             _dataState.value = FeedModelState(loading = true)
-            // repository.stream.cachedIn(viewModelScope).
+            // Pager сам запустит загрузку по подписке data
             _dataState.value = FeedModelState()
         } catch (e: Exception) {
             _dataState.value = FeedModelState(error = true)
@@ -81,7 +83,8 @@ class PostViewModel @Inject constructor(
     fun refreshPosts() = viewModelScope.launch {
         try {
             _dataState.value = FeedModelState(refreshing = true)
-//            repository.getAll()
+            // триггерим пересоздание Pager
+            auth.invalidate()
             _dataState.value = FeedModelState()
         } catch (e: Exception) {
             _dataState.value = FeedModelState(error = true)
