@@ -39,15 +39,12 @@ private val noPhoto = PhotoModel()
 @HiltViewModel
 class PostViewModel @Inject constructor(
     private val repository: PostRepository,
-    private val auth: AppAuth,
+    auth: AppAuth,
 ) : ViewModel() {
 
     val data: Flow<PagingData<Post>> = auth.authStateFlow
         .flatMapLatest { authState ->
-            Pager(PagingConfig(pageSize = 10)) {
-                PostPagingSource(repository.service, authState.token)
-            }
-                .flow
+            repository.data
                 .map { pagingData ->
                     pagingData.map { post ->
                         post.copy(ownedByMe = post.authorId == authState.id)
@@ -73,18 +70,6 @@ class PostViewModel @Inject constructor(
     fun loadPosts() = viewModelScope.launch {
         try {
             _dataState.value = FeedModelState(loading = true)
-            // Pager сам запустит загрузку по подписке data
-            _dataState.value = FeedModelState()
-        } catch (e: Exception) {
-            _dataState.value = FeedModelState(error = true)
-        }
-    }
-
-    fun refreshPosts() = viewModelScope.launch {
-        try {
-            _dataState.value = FeedModelState(refreshing = true)
-            // триггерим пересоздание Pager
-            auth.invalidate()
             _dataState.value = FeedModelState()
         } catch (e: Exception) {
             _dataState.value = FeedModelState(error = true)
@@ -98,10 +83,9 @@ class PostViewModel @Inject constructor(
                     repository.save(
                         it, _photo.value?.uri?.let { MediaUpload(it.toFile()) }
                     )
-
                     _postCreated.value = Unit
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    _dataState.value = FeedModelState(error = true)
                 }
             }
         }
@@ -115,9 +99,7 @@ class PostViewModel @Inject constructor(
 
     fun changeContent(content: String) {
         val text = content.trim()
-        if (edited.value?.content == text) {
-            return
-        }
+        if (edited.value?.content == text) return
         edited.value = edited.value?.copy(content = text)
     }
 
