@@ -41,13 +41,15 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Если не залогинены — запускаем AuthActivity и закрываем MainActivity
         if (!authViewModel.isLoggedIn()) {
             startActivity(Intent(this, AuthActivity::class.java))
             finish()
             return
         }
 
-        val localAdapter = PostAdapter(object : OnInteractionListener {
+        // Настраиваем RecyclerView + Adapter
+        val postAdapter = PostAdapter(object : OnInteractionListener {
             override fun onLike(post: Post) {
                 postViewModel.likeById(post.id)
             }
@@ -71,13 +73,15 @@ class MainActivity : AppCompatActivity() {
 
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = localAdapter
+            adapter = postAdapter
         }
 
+        // Подписываемся на данные
         postViewModel.data.observe(this) { posts ->
-            localAdapter.submitList(posts)
+            postAdapter.submitList(posts)
         }
 
+        // Баннер новых постов
         postViewModel.newCount.observe(this) { count ->
             binding.bannerNew.visibility = if (count > 0) VISIBLE else GONE
             binding.textNew.text = getString(R.string.new_posts_count, count)
@@ -88,6 +92,7 @@ class MainActivity : AppCompatActivity() {
             binding.recyclerView.smoothScrollToPosition(0)
         }
 
+        // Ошибки сети
         postViewModel.error.observe(this) { msg ->
             msg?.let {
                 Snackbar.make(binding.root, it, Snackbar.LENGTH_INDEFINITE)
@@ -96,6 +101,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Редактирование / создание нового
         postViewModel.edited.observe(this) { post ->
             post?.let { newPostLauncher.launch(it.content) }
         }
@@ -104,8 +110,10 @@ class MainActivity : AppCompatActivity() {
             postViewModel.createNewPost()
         }
 
+        // Кнопка «Выйти»
         binding.logoutButton.setOnClickListener {
             authViewModel.logout()
+            postViewModel.refresh()
             startActivity(Intent(this, AuthActivity::class.java))
             finish()
         }
