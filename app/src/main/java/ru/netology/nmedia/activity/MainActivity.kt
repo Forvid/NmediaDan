@@ -41,7 +41,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Если не залогинены — запускаем AuthActivity и закрываем MainActivity
+        // запуск AuthActivity и закрываем MainActivity
         if (!authViewModel.isLoggedIn()) {
             startActivity(Intent(this, AuthActivity::class.java))
             finish()

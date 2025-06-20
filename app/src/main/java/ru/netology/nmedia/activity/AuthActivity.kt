@@ -30,9 +30,9 @@ class AuthActivity : AppCompatActivity() {
 
         authViewModel.loginResult.observe(this) { success ->
             if (success) {
-                // 1) обновление ленты
+
                 postViewModel.refresh()
-                // 2) закрытие экрана логина
+
                 finish()
             } else {
                 Toast.makeText(this, "Неверные данные", Toast.LENGTH_SHORT).show()
