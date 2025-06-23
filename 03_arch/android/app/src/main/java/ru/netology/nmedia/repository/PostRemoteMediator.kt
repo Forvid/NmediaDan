@@ -28,11 +28,22 @@ class PostRemoteMediator(
     ): MediatorResult {
         return try {
             val response = when (loadType) {
-                LoadType.REFRESH -> service.getLatest(state.config.initialLoadSize)
-                LoadType.PREPEND -> return MediatorResult.Success(endOfPaginationReached = true)
+                LoadType.REFRESH -> {
+                    // если БД пуста — getLatest, иначе getAfter
+                    val afterKey = postRemoteKeyDao.maxByType(PostRemoteKeyEntity.KeyType.AFTER)
+                    if (afterKey == null) {
+                        service.getLatest(state.config.initialLoadSize)
+                    } else {
+                        service.getAfter(afterKey, state.config.initialLoadSize)
+                    }
+                }
+                LoadType.PREPEND ->
+                    // запретили автоподгрузку сверху
+                    return MediatorResult.Success(endOfPaginationReached = true)
                 LoadType.APPEND -> {
-                    val minId = postRemoteKeyDao.min() ?: return MediatorResult.Success(endOfPaginationReached = true)
-                    service.getBefore(minId, state.config.pageSize)
+                    val beforeKey = postRemoteKeyDao.minByType(PostRemoteKeyEntity.KeyType.BEFORE)
+                        ?: return MediatorResult.Success(endOfPaginationReached = true)
+                    service.getBefore(beforeKey, state.config.pageSize)
                 }
             }
 
@@ -44,24 +55,26 @@ class PostRemoteMediator(
             db.withTransaction {
                 when (loadType) {
                     LoadType.REFRESH -> {
+                        // при REFRESH не чистим БД, а добавляем сверху
+                        val firstId = body.firstOrNull()?.id ?: return@withTransaction
                         postRemoteKeyDao.insert(
                             PostRemoteKeyEntity(
                                 type = PostRemoteKeyEntity.KeyType.AFTER,
-                                id = body.firstOrNull()?.id ?: return@withTransaction
+                                id = firstId
                             )
                         )
                     }
                     LoadType.APPEND -> {
+                        val lastId = body.lastOrNull()?.id ?: return@withTransaction
                         postRemoteKeyDao.insert(
                             PostRemoteKeyEntity(
                                 type = PostRemoteKeyEntity.KeyType.BEFORE,
-                                id = body.last().id
+                                id = lastId
                             )
                         )
                     }
-                    else -> { /* PREPEND уже вышел */ }
+                    else -> { /* PREPEND пропущен */ }
                 }
-                //  новые записи (REPLACE по PK)
                 postDao.insert(body.toEntity())
             }
 
